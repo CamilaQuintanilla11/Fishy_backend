@@ -50,7 +50,14 @@ export class EvidenciaRepository {
     );
     return result.affectedRows > 0;
   }
+  async setPhoto(id: string, filename: string): Promise<Contact | undefined> {
+    await this.pool.query(
+        `UPDATE contacts SET foto = '${filename}' WHERE id = '${id}'`,
+    );
+    return this.findById(id);
+   }
 }
+
 
 function toEntity(row: any): Evidencia {
   const evidencia = new Evidencia();
