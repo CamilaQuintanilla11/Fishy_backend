@@ -52,6 +52,34 @@ export class EvidenciaController {
     return this.service.actualizar(id, dto);
   }
 
+  @Post(':id/photo')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: 'uploads',
+        filename: (_req, file, cb) => cb(null, file.originalname),
+      }),
+    }),
+  )
+  @ApiOperation({ summary: 'Subir o reemplazar la foto de un contacto' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { photo: { type: 'string', format: 'binary' } },
+      required: ['photo'],
+    },
+  })
+  @ApiResponse({ status: 201, type: EvidenciaResponseDto })
+  @ApiResponse({ status: 400, description: 'No vino ningún archivo' })
+  @ApiResponse({ status: 404, description: 'No existe un contacto con ese id' })
+  uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<EvidenciaResponseDto> {
+    if (!file) throw new BadRequestException('Falta el campo photo');
+    return (this.service as any).setPhoto(id, file);
+  }
   @Delete(':id')
   @HttpCode(204)
   eliminar(@Param('id') id: string): Promise<void> {

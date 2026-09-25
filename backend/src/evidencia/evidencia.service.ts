@@ -43,6 +43,15 @@ export class EvidenciaService {
         return EvidenciaResponseDto.fromEntity(actualizado!);
   }
 
+  async setPhoto(id:string, file: Express.Multer.File,): Promise<EvidenciaResponseDto> {
+        const contact = (await this.repository.findAll()).find((c) => c.id == id);
+    if (!contact) {
+      throw new NotFoundException('Reporte ' + id + ' no encontrado');
+    }
+    const updated = (await this.repository.setPhoto(id, file.filename))!;
+    return EvidenciaResponseDto.fromEntity(updated);
+  }
+
   async eliminar(id: string): Promise<void> {
     const evidencia = await this.repository.findById(id);
     if (!evidencia) {

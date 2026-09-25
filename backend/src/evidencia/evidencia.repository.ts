@@ -62,6 +62,7 @@ export class EvidenciaRepository {
     );
     return result.affectedRows > 0;
   }
+  
   async setPhoto(id: string, filename: string): Promise<Evidencia | undefined> {
     await this.pool.query(
         `UPDATE contacts SET foto = '${filename}' WHERE id = '${id}'`,
