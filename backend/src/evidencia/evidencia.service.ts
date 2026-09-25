@@ -2,12 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EvidenciaRepository } from './evidencia.repository';
 import { EvidenciaResponseDto } from './dto/evidencia-response.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
+import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
 
 @Injectable()
 export class EvidenciaService {
   constructor(private readonly repository: EvidenciaRepository) {}
 
-  async create(dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
+  async crear(dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
     const evidencia = await this.repository.save({
       url: dto.url,
       foto: dto.foto,
@@ -16,12 +17,12 @@ export class EvidenciaService {
     return EvidenciaResponseDto.fromEntity(evidencia);
   }
 
-  async findAll(): Promise<EvidenciaResponseDto[]> {
+  async listar(): Promise<EvidenciaResponseDto[]> {
     const evidencias = await this.repository.findAll();
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
-  async findOne(id: string): Promise<EvidenciaResponseDto> {
+  async obtener(id: string): Promise<EvidenciaResponseDto> {
     const evidencia = await this.repository.findById(id);
     if (!evidencia) {
       throw new NotFoundException(`Evidencia ${id} no encontrada`);
@@ -34,7 +35,15 @@ export class EvidenciaService {
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
-  async remove(id: string): Promise<void> {
+  async actualizar(id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
+        await this.obtener(id);
+
+        const cambios: Record<string, any> = {...dto};
+        const actualizado = await this.repository.update(id, cambios);
+        return EvidenciaResponseDto.fromEntity(actualizado!);
+  }
+
+  async eliminar(id: string): Promise<void> {
     const evidencia = await this.repository.findById(id);
     if (!evidencia) {
       throw new NotFoundException(`Evidencia ${id} no encontrada`);

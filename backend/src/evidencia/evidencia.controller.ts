@@ -25,29 +25,36 @@ import { diskStorage } from 'multer';
 import { EvidenciaService } from './evidencia.service';
 import { EvidenciaResponseDto } from './dto/evidencia-response.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
+import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('evidencias')
 export class EvidenciaController {
   constructor(private readonly service: EvidenciaService) {}
 
   @Post()
-  create(@Body() dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
-    return this.service.create(dto);
+  crear(@Body() dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
+    return this.service.crear(dto);
   }
 
   @Get()
-  findAll(): Promise<EvidenciaResponseDto[]> {
-    return this.service.findAll();
+  listar(): Promise<EvidenciaResponseDto[]> {
+    return this.service.listar();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<EvidenciaResponseDto> {
-    return this.service.findOne(id);
+  obtener(@Param('id') id: string): Promise<EvidenciaResponseDto> {
+    return this.service.obtener(id);
+  }
+  @Patch(':id')
+  actualizar(@Param('id') id: string, @Body() dto: UpdateEvidenciaDto) {
+    return this.service.actualizar(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: string): Promise<void> {
-    return this.service.remove(id);
+  eliminar(@Param('id') id: string): Promise<void> {
+    return this.service.eliminar(id);
   }
 }

@@ -4,7 +4,7 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Evidencia } from './entities/evidencia.entity';
 
-const COLUMNS = 'id, url, foto, fecha_creado, perteneceAReporte';
+const COLUMNS = ' url, foto, descripcion';
 
 @Injectable()
 export class EvidenciaRepository {
@@ -44,13 +44,25 @@ export class EvidenciaRepository {
     return (await this.findById(id))!;
   }
 
+    async update(id: string, changes: Partial<Evidencia>): Promise<Evidencia | undefined> {
+        const allowedColumns = [' url, foto, descripcion'];
+        const entries = Object.entries(changes).filter(([column, value]) => allowedColumns.includes(column) && value !== undefined);
+        if (entries.length === 0) return this.findById(id);
+
+        const sets = entries.map(([column]) => `${column} = ?`).join(', ');
+        const values = entries.map(([, value]) => value);
+
+        await this.pool.query(`UPDATE evidencia SET ${sets} WHERE id = ?`, [...values, id]);
+        return this.findById(id);
+    }
+
   async delete(id: string): Promise<boolean> {
     const [result] = await this.pool.query<ResultSetHeader>(
       `DELETE FROM evidencia WHERE id = '${id}'`,
     );
     return result.affectedRows > 0;
   }
-  async setPhoto(id: string, filename: string): Promise<Contact | undefined> {
+  async setPhoto(id: string, filename: string): Promise<Evidencia | undefined> {
     await this.pool.query(
         `UPDATE contacts SET foto = '${filename}' WHERE id = '${id}'`,
     );
