@@ -7,20 +7,25 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 }from '@nestjs/common';
-import{ ReporteService} from './reporte.service';
-import { ReporteResponseDto} from './dto/reporte-response.dto';
-import { CreateReporteDto} from './dto/create-reporte.dto';
-import { UpdateReporteDto} from './dto/update-reporte.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtPayload } from '../auth/jwt';
+import { ReporteService } from './reporte.service';
+import { ReporteResponseDto } from './dto/reporte-response.dto';
+import { CreateReporteDto } from './dto/create-reporte.dto';
+import { UpdateReporteDto } from './dto/update-reporte.dto';
 
 @Controller('reportes')
+@UseGuards(AuthGuard)
 export class ReporteController{
   constructor(private readonly service: ReporteService) {}
 
   @Post()
-  create(@Body() dto:CreateReporteDto):Promise<ReporteResponseDto> {
-    const userId = 'c8bc4e70-4051-4339-b288-7c71b2ff52ee'; 
-    return this.service.create(userId, dto);
+  create(@CurrentUser() user: JwtPayload, @Body() dto:CreateReporteDto):Promise<ReporteResponseDto> {
+
+    return this.service.create(user.sub, dto);
   }
 
   @Get()
