@@ -6,6 +6,8 @@ import { UpdateReporteDto } from './dto/update-reporte.dto';
 import { EstadoRepository } from '../estado/estado.repository';
 import { RiesgoRepository } from '../riesgo/riesgo.repository';
 import { Reporte } from './entities/reporte.entity';
+import { ModerarReporteDto } from './dto/admin-reporte.dto';
+
 
 const ESTADO_INICIAL = 'pendiente';
 
@@ -33,18 +35,19 @@ export class ReporteService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
-  async findAll(userId: string): Promise<ReporteResponseDto[]> {
-    const reportes = await this.repository.findAllByUsuario(userId);
+
+  async findAll(): Promise<ReporteResponseDto[]> {
+    const reportes = await this.repository.findAll();
     return reportes.map(ReporteResponseDto.fromEntity);
   }
 
-  async findOne(userId: string, id: string): Promise<ReporteResponseDto> {
-    const reporte = await this.obtenerReporteDelUsuario(userId, id);
+  async findOne(id: string): Promise<ReporteResponseDto> {
+    const reporte = await this.obtenerReporte(id);
     return ReporteResponseDto.fromEntity(reporte);
   }
 
   async update(userId: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
-    await this.obtenerReporteDelUsuario(userId, id);
+    await this.obtenerReportePropio(userId, id);
     if (changes.tieneRiesgo) {
       await this.validarRiesgo(changes.tieneRiesgo);
     }
@@ -53,17 +56,44 @@ export class ReporteService {
   }
 
   async remove(userId: string, id: string): Promise<void> {
-    await this.obtenerReporteDelUsuario(userId, id);
+    await this.obtenerReportePropio(userId, id);
     await this.repository.delete(id);
   }
 
-  private async obtenerReporteDelUsuario(userId: string, id: string): Promise<Reporte> {
+  async listarPendientes(): Promise<ReporteResponseDto[]> {
+    const pendiente = await this.estadoRepository.findByNombre(ESTADO_INICIAL);
+    if (!pendiente) {
+      throw new Error(`No existe el estado "${ESTADO_INICIAL}"`);
+    }
+    const reportes = await this.repository.findAllByEstado(pendiente.id);
+    return reportes.map(ReporteResponseDto.fromEntity);
+  }
+
+  async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
+    await this.obtenerReporte(id); // 404 si no existe (sin chequeo de dueno: es admin)
+    const estado = await this.estadoRepository.findById(dto.tieneEstado);
+    if (!estado) {
+      throw new NotFoundException('El estado no existe.');
+    }
+    const updated = (await this.repository.update(id, {
+      tieneEstado: dto.tieneEstado,
+      fecha_aprob: new Date(),
+    }))!;
+    return ReporteResponseDto.fromEntity(updated);
+  }
+
+  private async obtenerReporte(id: string): Promise<Reporte> {
     const reporte = await this.repository.findById(id);
     if (!reporte) {
       throw new NotFoundException(`Reporte ${id} no encontrado`);
     }
+    return reporte;
+  }
+
+  private async obtenerReportePropio(userId: string, id: string): Promise<Reporte> {
+    const reporte = await this.obtenerReporte(id);
     if (reporte.perteneceA !== userId) {
-      throw new ForbiddenException('No tienes acceso a este reporte');
+      throw new ForbiddenException('No puedes modificar un reporte que no es tuyo');
     }
     return reporte;
   }

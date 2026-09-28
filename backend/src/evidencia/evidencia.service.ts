@@ -11,62 +11,62 @@ import { Reporte } from '../reporte/entities/reporte.entity';
 
 @Injectable()
 export class EvidenciaService {
-  constructor(private readonly repository: EvidenciaRepository, private readonly reporteRepository: ReporteRepository) {}
+  constructor(
+    private readonly repository: EvidenciaRepository,
+    private readonly reporteRepository: ReporteRepository,
+  ) {}
 
-  async crear(userID: string, dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
-    await this.getReporteDelUsuario(userID, dto.perteneceAReporte);
+
+  async crear(userId: string, dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
+    await this.getReportePropio(userId, dto.perteneceAReporte);
     const evidencia = await this.repository.save({
       url: dto.url,
-      foto: '',
-      descripcion: dto.descripcion,
+      foto: '', 
       perteneceAReporte: dto.perteneceAReporte,
     });
     return EvidenciaResponseDto.fromEntity(evidencia);
   }
 
-  async listar(userID: string): Promise<EvidenciaResponseDto[]> {
-    const evidencias = await this.repository.findAllByUsuario(userID);
+  async listar(): Promise<EvidenciaResponseDto[]> {
+    const evidencias = await this.repository.findAll();
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
-  async obtener(userID: string, id: string): Promise<EvidenciaResponseDto> {
-    const evidencia = await this.obtenerEvidenciaDelUsuario(userID, id);
-    if (!evidencia) {
-      throw new NotFoundException(`error`);
-    }
+  async obtener(id: string): Promise<EvidenciaResponseDto> {
+    const evidencia = await this.getEvidencia(id);
     return EvidenciaResponseDto.fromEntity(evidencia);
   }
 
-  async findByReporte(userID: string, reporteId: string): Promise<EvidenciaResponseDto[]> {
-    await this.getReporteDelUsuario(userID, reporteId);
+  async findByReporte(reporteId: string): Promise<EvidenciaResponseDto[]> {
+    const reporte = await this.reporteRepository.findById(reporteId);
+    if (!reporte) {
+      throw new NotFoundException(`Reporte ${reporteId} no encontrado`);
+    }
     const evidencias = await this.repository.findByReporteId(reporteId);
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
-  async actualizar(userID:string, id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
-        await this.obtenerEvidenciaDelUsuario(userID, id);
-        const actualizado = await this.repository.update(id, dto);
-        return EvidenciaResponseDto.fromEntity(actualizado!);
+  async actualizar(userId: string, id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
+    await this.getEvidenciaPropia(userId, id);
+    const actualizado = await this.repository.update(id, dto);
+    return EvidenciaResponseDto.fromEntity(actualizado!);
   }
 
-  async setPhoto(userID: string, id:string, file: Express.Multer.File,): Promise<EvidenciaResponseDto> {
-    const evidencia = await this.obtenerEvidenciaDelUsuario(userID, id);
-    const anterior = evidencia.foto;
-
+  async setPhoto(userId: string, id: string, file: Express.Multer.File): Promise<EvidenciaResponseDto> {
+    const anterior = await this.getEvidenciaPropia(userId, id);
     const actualizado = (await this.repository.setPhoto(id, file.filename))!;
-
-    await this.borrarArchivo(anterior)
-    
+    await this.borrarArchivo(anterior.foto);
     return EvidenciaResponseDto.fromEntity(actualizado);
   }
 
-  async eliminar(userID: string, id: string): Promise<void> {
-    await this.obtenerEvidenciaDelUsuario(userID, id);
-
+  async eliminar(userId: string, id: string): Promise<void> {
+    const evidencia = await this.getEvidenciaPropia(userId, id);
     await this.repository.delete(id);
+    await this.borrarArchivo(evidencia.foto);
   }
 
-  private async getReporteDelUsuario(userId: string, reporteId: string): Promise<Reporte> {
+
+  private async getReportePropio(userId: string, reporteId: string): Promise<Reporte> {
     const reporte = await this.reporteRepository.findById(reporteId);
     if (!reporte) {
       throw new NotFoundException(`Reporte ${reporteId} no encontrado`);
@@ -77,12 +77,17 @@ export class EvidenciaService {
     return reporte;
   }
 
-  private async obtenerEvidenciaDelUsuario(userId: string, id: string): Promise<Evidencia> {
+  private async getEvidencia(id: string): Promise<Evidencia> {
     const evidencia = await this.repository.findById(id);
     if (!evidencia) {
-      throw new NotFoundException(`error`);
+      throw new NotFoundException(`Evidencia ${id} no encontrada`);
     }
-    await this.getReporteDelUsuario(userId, evidencia.perteneceAReporte);
+    return evidencia;
+  }
+
+  private async getEvidenciaPropia(userId: string, id: string): Promise<Evidencia> {
+    const evidencia = await this.getEvidencia(id);
+    await this.getReportePropio(userId, evidencia.perteneceAReporte);
     return evidencia;
   }
 

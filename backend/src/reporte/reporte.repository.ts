@@ -27,6 +27,14 @@ export class ReporteRepository {
     return rows.map(toEntity);
   }
 
+  async findAllByEstado(estadoID: string): Promise<Reporte[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT ${COLUMNS} FROM reporte WHERE tieneEstado = ? ORDER BY fecha_pub`,
+      [estadoID],
+    );
+    return rows.map(toEntity);
+  }
+
   async findById(id: string): Promise<Reporte | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
       `SELECT ${COLUMNS} FROM reporte WHERE id = ?`,

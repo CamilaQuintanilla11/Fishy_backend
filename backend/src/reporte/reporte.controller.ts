@@ -17,6 +17,9 @@ import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { CreateReporteDto } from './dto/create-reporte.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { ModerarReporteDto } from './dto/admin-reporte.dto';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -31,19 +34,34 @@ export class ReporteController{
   }
 
   @Get()
-  findAll(@CurrentUser() user: JwtPayload):Promise<ReporteResponseDto[]>{
-    return this.service.findAll(user.sub);
+  findAll():Promise<ReporteResponseDto[]>{
+    return this.service.findAll();
+  }
+
+  @Get('pendientes')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  listarPendientes(): Promise<ReporteResponseDto[]> {
+    return this.service.listarPendientes()
   }
 
   @Get(':id')
-  findOne(@CurrentUser() user: JwtPayload, @Param('id') id:string): Promise<ReporteResponseDto> {
-    return this.service.findOne(user.sub, id);
+  findOne(@Param('id') id:string): Promise<ReporteResponseDto> {
+    return this.service.findOne(id);
   }
 
   @Patch(':id')
   update(@CurrentUser() user: JwtPayload, @Param('id') id:string, @Body() dto: UpdateReporteDto,
   ): Promise<ReporteResponseDto> {
     return this.service.update(user.sub, id,dto);
+  }
+
+
+  @Patch(':id/moderar')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  moderar(@Param('id') id:string, @Body() dto: ModerarReporteDto): Promise<ReporteResponseDto> {
+    return this.service.moderar(id,dto);
   }
 
   @Delete(':id')

@@ -6,6 +6,7 @@ export interface JwtPayload {
     sub: string;
     correo: string;
     tieneRol: string;
+    rolNombre: string;
     type: 'access' | 'refresh';
     iat: number;
     exp: number;

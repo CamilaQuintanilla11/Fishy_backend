@@ -33,8 +33,10 @@ import { EvidenciaResponseDto } from './dto/evidencia-response.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
 
-const EXTENSIONES = ['.png', '.jpg', '.jpeg', '.webp'];
+const EXTENSIONES_PERMITIDAS = ['.png', '.jpg', '.jpeg', '.webp'];
 
+
+@ApiTags('evidencias')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('evidencias')
@@ -47,16 +49,21 @@ export class EvidenciaController {
   }
 
   @Get()
-  listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
-    return this.service.listar(user.sub);
+  listar(): Promise<EvidenciaResponseDto[]> {
+    return this.service.listar();
   }
 
   @Get(':id')
-  obtener(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<EvidenciaResponseDto> {
-    return this.service.obtener(user.sub, id);
+  obtener(@Param('id') id: string): Promise<EvidenciaResponseDto> {
+    return this.service.obtener(id);
   }
+
   @Patch(':id')
-  actualizar(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: UpdateEvidenciaDto) {
+  actualizar(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateEvidenciaDto,
+  ): Promise<EvidenciaResponseDto> {
     return this.service.actualizar(user.sub, id, dto);
   }
 
@@ -65,15 +72,16 @@ export class EvidenciaController {
     FileInterceptor('photo', {
       storage: diskStorage({
         destination: 'uploads',
-        filename: (_req, file, cb) => cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
+        filename: (_req, file, cb) =>
+          cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
       }),
       fileFilter: (_req, file, cb) => {
         const ext = extname(file.originalname).toLowerCase();
-        if (!file.mimetype.startsWith('image/') || !EXTENSIONES.includes(ext)) {
+        if (!file.mimetype.startsWith('image/') || !EXTENSIONES_PERMITIDAS.includes(ext)) {
           return cb(new BadRequestException('Solo se permiten imagenes (png, jpg, jpeg, webp)'), false);
-      }
-      cb(null, true);
-    },
+        }
+        cb(null, true);
+      },
     }),
   )
   @ApiOperation({ summary: 'Subir o reemplazar la foto de una evidencia' })
@@ -86,7 +94,8 @@ export class EvidenciaController {
     },
   })
   @ApiResponse({ status: 201, type: EvidenciaResponseDto })
-  @ApiResponse({ status: 400, description: 'No vino ningún archivo' })
+  @ApiResponse({ status: 400, description: 'No vino archivo, o no es una imagen valida' })
+  @ApiResponse({ status: 403, description: 'La evidencia es de un reporte de otro usuario' })
   @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
   async uploadPhoto(
     @CurrentUser() user: JwtPayload,
@@ -94,8 +103,14 @@ export class EvidenciaController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<EvidenciaResponseDto> {
     if (!file) throw new BadRequestException('Falta el campo photo');
-    return (this.service as any).setPhoto(id, file);
+    try {
+      return await this.service.setPhoto(user.sub, id, file);
+    } catch (error) {
+      await unlink(file.path).catch(() => undefined);
+      throw error;
+    }
   }
+
   @Delete(':id')
   @HttpCode(204)
   eliminar(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
