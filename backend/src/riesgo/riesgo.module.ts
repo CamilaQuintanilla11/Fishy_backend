@@ -5,6 +5,7 @@ import { RiesgoRepository } from './riesgo.repository';
 import { DatabaseModule } from 'src/database/database.module';
 
 @Module({
+    imports: [DatabaseModule],
     controllers: [RiesgoController],
     providers: [RiesgoService, RiesgoRepository],
     exports: [RiesgoRepository],
