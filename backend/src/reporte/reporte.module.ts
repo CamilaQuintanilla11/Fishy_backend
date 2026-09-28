@@ -11,5 +11,6 @@ import { AuthModule } from '../auth/auth.module';
   imports:[DatabaseModule, EstadoModule, RiesgoModule, AuthModule],
   controllers:[ReporteController],
   providers:[ReporteService, ReporteRepository],
+  exports: [ReporteRepository],
 })
 export class ReporteModule {}

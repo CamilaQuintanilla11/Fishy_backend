@@ -22,34 +22,42 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { randomUUID } from 'node:crypto';
+import { unlink } from 'node:fs/promises';
+import { extname } from 'node:path';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtPayload } from '../auth/jwt';
 import { EvidenciaService } from './evidencia.service';
 import { EvidenciaResponseDto } from './dto/evidencia-response.dto';
 import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 
+const EXTENSIONES = ['.png', '.jpg', '.jpeg', '.webp'];
+
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('evidencias')
 export class EvidenciaController {
   constructor(private readonly service: EvidenciaService) {}
 
   @Post()
-  crear(@Body() dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
-    return this.service.crear(dto);
+  crear(@CurrentUser() user: JwtPayload, @Body() dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
+    return this.service.crear(user.sub, dto);
   }
 
   @Get()
-  listar(): Promise<EvidenciaResponseDto[]> {
-    return this.service.listar();
+  listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
+    return this.service.listar(user.sub);
   }
 
   @Get(':id')
-  obtener(@Param('id') id: string): Promise<EvidenciaResponseDto> {
-    return this.service.obtener(id);
+  obtener(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<EvidenciaResponseDto> {
+    return this.service.obtener(user.sub, id);
   }
   @Patch(':id')
-  actualizar(@Param('id') id: string, @Body() dto: UpdateEvidenciaDto) {
-    return this.service.actualizar(id, dto);
+  actualizar(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: UpdateEvidenciaDto) {
+    return this.service.actualizar(user.sub, id, dto);
   }
 
   @Post(':id/photo')
@@ -57,11 +65,18 @@ export class EvidenciaController {
     FileInterceptor('photo', {
       storage: diskStorage({
         destination: 'uploads',
-        filename: (_req, file, cb) => cb(null, file.originalname),
+        filename: (_req, file, cb) => cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
       }),
+      fileFilter: (_req, file, cb) => {
+        const ext = extname(file.originalname).toLowerCase();
+        if (!file.mimetype.startsWith('image/') || !EXTENSIONES.includes(ext)) {
+          return cb(new BadRequestException('Solo se permiten imagenes (png, jpg, jpeg, webp)'), false);
+      }
+      cb(null, true);
+    },
     }),
   )
-  @ApiOperation({ summary: 'Subir o reemplazar la foto de un contacto' })
+  @ApiOperation({ summary: 'Subir o reemplazar la foto de una evidencia' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -72,8 +87,9 @@ export class EvidenciaController {
   })
   @ApiResponse({ status: 201, type: EvidenciaResponseDto })
   @ApiResponse({ status: 400, description: 'No vino ningún archivo' })
-  @ApiResponse({ status: 404, description: 'No existe un contacto con ese id' })
-  uploadPhoto(
+  @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
+  async uploadPhoto(
+    @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<EvidenciaResponseDto> {
@@ -82,7 +98,7 @@ export class EvidenciaController {
   }
   @Delete(':id')
   @HttpCode(204)
-  eliminar(@Param('id') id: string): Promise<void> {
-    return this.service.eliminar(id);
+  eliminar(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.service.eliminar(user.sub, id);
   }
 }

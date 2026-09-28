@@ -16,9 +16,11 @@ import { ReporteService } from './reporte.service';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { CreateReporteDto } from './dto/create-reporte.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@Controller('reportes')
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
+@Controller('reportes')
 export class ReporteController{
   constructor(private readonly service: ReporteService) {}
 
@@ -29,24 +31,24 @@ export class ReporteController{
   }
 
   @Get()
-  findAll():Promise<ReporteResponseDto[]>{
-    return this.service.findAll();
+  findAll(@CurrentUser() user: JwtPayload):Promise<ReporteResponseDto[]>{
+    return this.service.findAll(user.sub);
   }
 
   @Get(':id')
-  findOne(@Param('id') id:string): Promise<ReporteResponseDto> {
-    return this.service.findOne(id);
+  findOne(@CurrentUser() user: JwtPayload, @Param('id') id:string): Promise<ReporteResponseDto> {
+    return this.service.findOne(user.sub, id);
   }
 
   @Patch(':id')
-  update(@Param('id') id:string, @Body() dto: UpdateReporteDto,
+  update(@CurrentUser() user: JwtPayload, @Param('id') id:string, @Body() dto: UpdateReporteDto,
   ): Promise<ReporteResponseDto> {
-    return this.service.update(id,dto);
+    return this.service.update(user.sub, id,dto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: string):Promise<void> {
-    return this.service.remove(id);
+  remove(@CurrentUser() user: JwtPayload, @Param('id') id: string):Promise<void> {
+    return this.service.remove(user.sub, id);
   }
 }

@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {randomUUID} from 'node:crypto';
-import type {Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import {DB_POOL} from '../database/database.module';
-import {Reporte} from './entities/reporte.entity';
+import { randomUUID } from 'node:crypto';
+import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { DB_POOL } from '../database/database.module';
+import { Reporte } from './entities/reporte.entity';
 
-const COLUMNS= 'descripcion, tieneRiesgo';
+const COLUMNS= 'id, descripcion, tieneRiesgo, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado';
+
+const UPDATE = ['descripcion', 'tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
 
 @Injectable()
 export class ReporteRepository {
@@ -17,10 +19,18 @@ export class ReporteRepository {
     return rows.map(toEntity);
   }
 
-  async findById(id: string):Promise<Reporte | undefined> {
+  async findAllByUsuario(perteneceA: string):Promise<Reporte[]> {
     const [rows]=await this.pool.query<RowDataPacket[]>(
+      `SELECT ${COLUMNS} FROM reporte WHERE perteneceA = ? ORDER BY fecha_pub DESC`,
+      [perteneceA]
+    );
+    return rows.map(toEntity);
+  }
+
+  async findById(id: string): Promise<Reporte | undefined> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
       `SELECT ${COLUMNS} FROM reporte WHERE id = ?`,
-      [id]
+      [id],
     );
     return rows[0] && toEntity(rows[0]);
   }
@@ -35,8 +45,7 @@ export class ReporteRepository {
   }
 
   async update(id: string, changes: Partial<Reporte>): Promise<Reporte | undefined> {
-    const allowedColumns = ['descripcion', 'tieneRiesgo', 'perteneceA', 'tieneEstado'];
-    const entries = Object.entries(changes).filter(([column, value]) => allowedColumns.includes(column) && value !== undefined);
+    const entries = Object.entries(changes).filter(([column, value]) => UPDATE.includes(column) && value !== undefined);
     if (entries.length === 0) return this.findById(id);
 
     const sets = entries.map(([column]) => `${column} = ?`).join(', ');

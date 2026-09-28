@@ -4,15 +4,16 @@ import { Evidencia } from '../entities/evidencia.entity';
 export class EvidenciaResponseDto {
   id: string;
   url: string;
-  foto: string;
-  fecha_creado: string;
-  perteneceAReporte: string;
+
   @ApiProperty({
     type: String,
     example: '/uploads/ana.png',
     nullable: true,
     description: 'Ruta de la foto, relativa al servidor; null si no tiene',
   })
+  foto: string;
+  fecha_creado: string;
+  perteneceAReporte: string;
 
   static fromEntity(evidencia: Evidencia): EvidenciaResponseDto {
     const dto = new EvidenciaResponseDto();

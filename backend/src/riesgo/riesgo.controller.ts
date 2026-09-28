@@ -1,7 +1,9 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { RiesgoService } from './riesgo.service';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('riesgos')
 export class RiesgoController {

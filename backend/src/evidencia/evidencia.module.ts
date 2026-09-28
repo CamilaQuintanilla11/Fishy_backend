@@ -4,9 +4,10 @@ import { EvidenciaController } from './evidencia.controller';
 import { EvidenciaRepository } from './evidencia.repository';
 import { EvidenciaService } from './evidencia.service';
 import { AuthModule } from '../auth/auth.module';
+import { ReporteModule } from 'src/reporte/reporte.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [ReporteModule, AuthModule],
   controllers: [EvidenciaController],
   providers: [EvidenciaService, EvidenciaRepository],
 })
