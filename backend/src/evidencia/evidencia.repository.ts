@@ -37,7 +37,7 @@ export class EvidenciaRepository {
   async save(data: { url: string; foto: string; descripcion:string; perteneceAReporte: string }): Promise<Evidencia> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO evidencia (id, url, foto, descripcion perteneceAReporte) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO evidencia (id, url, foto, descripcion, perteneceAReporte) VALUES (?, ?, ?, ?, ?)`,
       [id, data.url, data.foto, data.descripcion, data.perteneceAReporte],
     );
     return (await this.findById(id))!;

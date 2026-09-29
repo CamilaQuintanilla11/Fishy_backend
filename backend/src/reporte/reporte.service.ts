@@ -51,6 +51,7 @@ export class ReporteService {
   }
 
   async findOne(id: string): Promise<ReporteResponseDto> {
+    const reporte = await this.obtenerReporte(id);
     const dto = ReporteResponseDto.fromEntity(reporte);
     dto.categorias = await this.reporteCategoriaRepository.findCategorias(id);
     return dto;
