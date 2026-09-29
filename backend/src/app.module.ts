@@ -7,6 +7,7 @@ import { CategoriaModule } from './categoria/categoria.module';
 import { EstadoModule } from './estado/estado.module';
 import { ReporteModule } from './reporte/reporte.module';
 import { RiesgoModule } from './riesgo/riesgo.module';
+import { EvidenciaModule } from './evidencia/evidencia.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { RiesgoModule } from './riesgo/riesgo.module';
     RolModule,
     UsuarioModule,
     ReporteModule,
-    RiesgoModule
+    RiesgoModule,
+    EvidenciaModule,
   ],
 })
 export class AppModule {}

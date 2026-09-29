@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS reporte (
 
     perteneceA CHAR(36) NOT NULL,
     tieneEstado CHAR(36) NOT NULL,
-    tieneRiesgo CHAR(36) NOT NULL,
+    tieneRiesgo CHAR(36) NULL,
 
     FOREIGN KEY (perteneceA) REFERENCES usuario(id),
     FOREIGN KEY (tieneEstado) REFERENCES estado(id),
@@ -65,6 +65,6 @@ CREATE TABLE IF NOT EXISTS reporte_categoria (
     fecha_asignacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (reporte_id, categoria_id),
-    FOREIGN KEY (reporte_id) REFERENCES reporte(id),
+    FOREIGN KEY (reporte_id) REFERENCES reporte(id) ON DELETE CASCADE,
     FOREIGN KEY (categoria_id) REFERENCES categoria(id)
 );

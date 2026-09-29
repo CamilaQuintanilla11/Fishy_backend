@@ -2,6 +2,7 @@ import { IsArray, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateReporteDto {
   @IsArray()
-  @IsUUID('4', { each: true})
+  @ArrayNotEmpty()
+  @IsUUID('all', { each: true})
   categorias: string[];
 }

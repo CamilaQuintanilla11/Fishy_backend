@@ -5,7 +5,7 @@ import { DB_POOL } from '../database/database.module';
 import { Evidencia } from './entities/evidencia.entity';
 
 const COLUMNS = 'id, url, foto, descripcion, fecha_creado, perteneceAReporte';
-const UPDATABLE = ['url', 'foto'];
+const UPDATABLE = ['url', 'foto', 'descripcion'];
 
 @Injectable()
 export class EvidenciaRepository {
@@ -34,11 +34,11 @@ export class EvidenciaRepository {
     return rows.map(toEntity);
   }
 
-  async save(data: { url: string; foto: string; perteneceAReporte: string }): Promise<Evidencia> {
+  async save(data: { url: string; foto: string; descripcion:string; perteneceAReporte: string }): Promise<Evidencia> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO evidencia (id, url, foto, perteneceAReporte) VALUES (?, ?, ?, ?)`,
-      [id, data.url, data.foto, data.perteneceAReporte],
+      `INSERT INTO evidencia (id, url, foto, descripcion perteneceAReporte) VALUES (?, ?, ?, ?, ?)`,
+      [id, data.url, data.foto, data.descripcion, data.perteneceAReporte],
     );
     return (await this.findById(id))!;
   }

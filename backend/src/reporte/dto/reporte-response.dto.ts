@@ -7,6 +7,7 @@ export class ReporteResponseDto {
   fecha_aprob:string | null;
   perteneceA:string;
   tieneEstado: string;
+  categorias: string[] = [];
   static fromEntity(reporte: Reporte):ReporteResponseDto{
     const dto=new ReporteResponseDto();
     dto.id =reporte.id;

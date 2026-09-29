@@ -22,6 +22,7 @@ export class EvidenciaService {
     const evidencia = await this.repository.save({
       url: dto.url,
       foto: '', 
+      descripcion: dto.descripcion,
       perteneceAReporte: dto.perteneceAReporte,
     });
     return EvidenciaResponseDto.fromEntity(evidencia);

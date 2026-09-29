@@ -10,7 +10,7 @@ import { RolModule } from 'src/rol/rol.module';
 import { ReporteCategoriaRepository } from './reporte-categoria.repository';
 
 @Module({
-  imports:[DatabaseModule, EstadoModule, RiesgoModule, AuthModule, RolModule],
+  imports:[DatabaseModule, EstadoModule, RiesgoModule, AuthModule, RolModule, CategoriaModule],
   controllers:[ReporteController],
   providers:[ReporteService, ReporteRepository, ReporteCategoriaRepository],
   exports: [ReporteRepository],

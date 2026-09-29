@@ -4,7 +4,7 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Reporte } from './entities/reporte.entity';
 
-const COLUMNS= 'id, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado';
+const COLUMNS= 'id, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado, tieneRiesgo';
 
 const UPDATE = ['tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
 

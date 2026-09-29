@@ -51,13 +51,18 @@ export class ReporteService {
   }
 
   async findOne(id: string): Promise<ReporteResponseDto> {
-    const reporte = await this.obtenerReporte(id);
-    return ReporteResponseDto.fromEntity(reporte);
+    const dto = ReporteResponseDto.fromEntity(reporte);
+    dto.categorias = await this.reporteCategoriaRepository.findCategorias(id);
+    return dto;
   }
 
   async update(userId: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
     await this.obtenerReportePropio(userId, id);
-    const updated = (await this.repository.update(id, changes))!;
+    if (changes.categorias) {
+      await this.reporteCategoriaRepository.eliminarTodas(id);
+      await this.reporteCategoriaRepository.agregarVarias(id, changes.categorias);
+    }
+    const updated = (await this.repository.findById(id))!;
     return ReporteResponseDto.fromEntity(updated);
   }
 

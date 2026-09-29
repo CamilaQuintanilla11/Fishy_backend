@@ -22,7 +22,7 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     @ApiOperation({ summary: 'Login de usuario + tokens' })
-    @ApiResponse({ status: 200, description: 'Login exitoso', schema: { example: { access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' } } })
+    @ApiResponse({ status: 200, description: 'Login exitoso', schema: { example: { accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' } } })
     @ApiResponse({ status: 401, description: 'Credenciales inválidas'})
     async login(@Body() dto: LoginDto) {
         return this.service.login(dto);
@@ -31,7 +31,7 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(200)
     @ApiOperation({ summary: 'Refrescar token' })
-    @ApiResponse({ status: 200, description: 'Token refrescado exitosamente', schema: { example: { access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' } } })
+    @ApiResponse({ status: 200, description: 'Token refrescado exitosamente', schema: { example: { accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' } } })
     @ApiResponse({ status: 401, description: 'Token inválido o expirado'})
     async refresh(@Body() dto: RefreshDto) {
         return this.service.refresh(dto);

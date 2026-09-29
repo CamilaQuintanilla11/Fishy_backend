@@ -7,7 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ReporteModule } from 'src/reporte/reporte.module';
 
 @Module({
-  imports: [ReporteModule, AuthModule],
+  imports: [DatabaseModule, ReporteModule, AuthModule],
   controllers: [EvidenciaController],
   providers: [EvidenciaService, EvidenciaRepository],
 })
