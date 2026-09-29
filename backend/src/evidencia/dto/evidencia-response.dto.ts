@@ -10,7 +10,7 @@ export class EvidenciaResponseDto {
     example: '/uploads/ana.png',
     description: 'Ruta de la foto, relativa al servidor; null si no tiene',
   })
-  foto: string | null;
+  foto: string;
   fecha_creado: string;
   perteneceAReporte: string;
   descripcion:string;
@@ -19,7 +19,7 @@ export class EvidenciaResponseDto {
     const dto = new EvidenciaResponseDto();
     dto.id = evidencia.id;
     dto.url = evidencia.url;
-    dto.foto = evidencia.foto ? '/uploads/' + evidencia.foto: null;
+    dto.foto = '/uploads/' + evidencia.foto;
     dto.fecha_creado = evidencia.fecha_creado.toISOString();
     dto.perteneceAReporte = evidencia.perteneceAReporte;
     dto.descripcion=evidencia.descripcion;
