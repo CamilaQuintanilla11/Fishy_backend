@@ -7,8 +7,12 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
-}from '@nestjs/common';
+  UseInterceptors,
+} from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt';
@@ -28,7 +32,8 @@ export class ReporteController{
   constructor(private readonly service: ReporteService) {}
 
   @Post()
-  create(@CurrentUser() user: JwtPayload, @Body() dto:CreateReporteDto):Promise<ReporteResponseDto> {
+  @UseInterceptors(FileInterceptor('foto'))
+  create(@CurrentUser() user: JwtPayload, @Body() dto:CreateReporteDto, @UploadedFile() foto: Express.Multer.File):Promise<ReporteResponseDto> {
 
     return this.service.create(user.sub, dto);
   }
