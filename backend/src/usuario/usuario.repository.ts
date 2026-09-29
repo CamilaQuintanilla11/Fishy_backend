@@ -71,5 +71,6 @@ function toEntity(row: any): Usuario {
     usuario.correo = row.correo;
     usuario.contrasenaHash = row.contrasenaHash;
     usuario.fecha_creado = row.fecha_creado;
+    usuario.tieneRol = row.tieneRol;
     return usuario;
 }

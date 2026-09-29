@@ -1,8 +1,7 @@
 import { Reporte } from '../entities/reporte.entity';
 export class ReporteResponseDto {
   id: string;
-  descripcion:string;
-  tieneRiesgo:string;
+  tieneRiesgo:string | null;
   fecha_pub: string;
   fecha_update:string;
   fecha_aprob:string | null;
@@ -11,7 +10,6 @@ export class ReporteResponseDto {
   static fromEntity(reporte: Reporte):ReporteResponseDto{
     const dto=new ReporteResponseDto();
     dto.id =reporte.id;
-    dto.descripcion= reporte.descripcion;
     dto.tieneRiesgo= reporte.tieneRiesgo;
     dto.fecha_pub=reporte.fecha_pub.toISOString();
     dto.fecha_update=reporte.fecha_update.toISOString();

@@ -7,7 +7,8 @@ import { EstadoRepository } from '../estado/estado.repository';
 import { RiesgoRepository } from '../riesgo/riesgo.repository';
 import { Reporte } from './entities/reporte.entity';
 import { ModerarReporteDto } from './dto/admin-reporte.dto';
-
+import { CategoriaRepository } from '../categoria/categoria.repository';
+import { ReporteCategoriaRepository } from './reporte-categoria.repository';
 
 const ESTADO_INICIAL = 'pendiente';
 
@@ -17,6 +18,8 @@ export class ReporteService {
     private readonly repository: ReporteRepository,
     private readonly estadoRepository: EstadoRepository,
     private readonly riesgoRepository: RiesgoRepository,
+    private readonly categoriaRepository: CategoriaRepository,
+    private readonly reporteCategoriaRepository: ReporteCategoriaRepository,
   ) {}
 
   async create(userId: string, dto: CreateReporteDto): Promise<ReporteResponseDto> {
@@ -24,14 +27,20 @@ export class ReporteService {
     if (!estadoInicial) {
       throw new Error(`No existe el estado "${ESTADO_INICIAL}"`);
     }
-    await this.validarRiesgo(dto.tieneRiesgo);
+    for (const categoriaId of dto.categorias) {
+      const categoria = await this.categoriaRepository.findById(categoriaId);
+
+      if (!categoria){
+        throw new NotFoundException('la categoría no existe');
+      }
+    }
 
     const reporte = await this.repository.save({
-      descripcion: dto.descripcion,
-      tieneRiesgo: dto.tieneRiesgo,
       perteneceA: userId,
       tieneEstado: estadoInicial.id,
     });
+    await this.reporteCategoriaRepository.agregarVarias(reporte.id, dto.categorias);
+
     return ReporteResponseDto.fromEntity(reporte);
   }
 
@@ -48,9 +57,6 @@ export class ReporteService {
 
   async update(userId: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
     await this.obtenerReportePropio(userId, id);
-    if (changes.tieneRiesgo) {
-      await this.validarRiesgo(changes.tieneRiesgo);
-    }
     const updated = (await this.repository.update(id, changes))!;
     return ReporteResponseDto.fromEntity(updated);
   }
@@ -70,13 +76,18 @@ export class ReporteService {
   }
 
   async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
-    await this.obtenerReporte(id); // 404 si no existe (sin chequeo de dueno: es admin)
+    await this.obtenerReporte(id); 
     const estado = await this.estadoRepository.findById(dto.tieneEstado);
     if (!estado) {
       throw new NotFoundException('El estado no existe.');
     }
+    const riesgo = await this.riesgoRepository.findById(dto.tieneRiesgo);
+    if (!riesgo) {
+      throw new NotFoundException('El riesgo no existe.');
+    }
     const updated = (await this.repository.update(id, {
       tieneEstado: dto.tieneEstado,
+      tieneRiesgo: dto.tieneRiesgo,
       fecha_aprob: new Date(),
     }))!;
     return ReporteResponseDto.fromEntity(updated);

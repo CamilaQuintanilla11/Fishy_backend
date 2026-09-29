@@ -7,11 +7,12 @@ import { RiesgoModule } from 'src/riesgo/riesgo.module';
 import { EstadoModule } from 'src/estado/estado.module';
 import { AuthModule } from '../auth/auth.module';
 import { RolModule } from 'src/rol/rol.module';
+import { ReporteCategoriaRepository } from './reporte-categoria.repository';
 
 @Module({
   imports:[DatabaseModule, EstadoModule, RiesgoModule, AuthModule, RolModule],
   controllers:[ReporteController],
-  providers:[ReporteService, ReporteRepository],
+  providers:[ReporteService, ReporteRepository, ReporteCategoriaRepository],
   exports: [ReporteRepository],
 })
 export class ReporteModule {}

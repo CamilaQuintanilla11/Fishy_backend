@@ -4,9 +4,9 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Reporte } from './entities/reporte.entity';
 
-const COLUMNS= 'id, descripcion, tieneRiesgo, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado';
+const COLUMNS= 'id, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado';
 
-const UPDATE = ['descripcion', 'tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
+const UPDATE = ['tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
 
 @Injectable()
 export class ReporteRepository {
@@ -43,11 +43,11 @@ export class ReporteRepository {
     return rows[0] && toEntity(rows[0]);
   }
 
-  async save (data:{descripcion: string; tieneRiesgo: string; perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
+  async save (data:{perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO reporte (id, descripcion, tieneRiesgo, perteneceA, tieneEstado) VALUES (?,?,?,?,?)`,
-      [id, data.descripcion, data.tieneRiesgo, data.perteneceA, data.tieneEstado],
+      `INSERT INTO reporte (id, perteneceA, tieneEstado) VALUES (?,?,?)`,
+      [id, data.perteneceA, data.tieneEstado],
     );
     return (await this.findById(id))!;
   }
@@ -78,8 +78,6 @@ export class ReporteRepository {
 function toEntity(row: any): Reporte {
   const reporte=new Reporte();
   reporte.id = row.id;
-  reporte.descripcion = row.descripcion;
-
   reporte.fecha_pub=row.fecha_pub;
   reporte.fecha_update= row.fecha_update;
   reporte.fecha_aprob= row.fecha_aprob ?? undefined;

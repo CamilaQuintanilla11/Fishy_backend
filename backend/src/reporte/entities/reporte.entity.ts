@@ -1,6 +1,5 @@
 export class Reporte {
   id: string;
-  descripcion: string;
 
   fecha_pub: Date;
   fecha_update: Date;
@@ -8,5 +7,5 @@ export class Reporte {
 
   perteneceA: string;
   tieneEstado: string;
-  tieneRiesgo: string;
+  tieneRiesgo: string | null;
 }

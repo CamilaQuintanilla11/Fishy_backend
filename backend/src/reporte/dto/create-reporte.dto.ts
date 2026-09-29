@@ -1,10 +1,7 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateReporteDto {
-  @IsString()
-  @IsNotEmpty()
-  descripcion:string;
-  @IsString()
-  @IsNotEmpty()
-  tieneRiesgo:string;
+  @IsArray()
+  @IsUUID('4', { each: true})
+  categorias: string[];
 }

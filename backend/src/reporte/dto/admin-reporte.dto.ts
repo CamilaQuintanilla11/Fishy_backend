@@ -1,6 +1,12 @@
-import { IsUUID } from "class-validator";
+import { IsUUID, IsNotEmpty} from "class-validator";
 
 export class ModerarReporteDto {
-    @IsUUID()
-    tieneEstado: string;
+  @IsUUID()
+  @IsNotEmpty()
+  tieneEstado: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  tieneRiesgo: string;
+
 }

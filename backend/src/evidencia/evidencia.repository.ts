@@ -4,7 +4,7 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Evidencia } from './entities/evidencia.entity';
 
-const COLUMNS = 'id, url, foto, fecha_creado, perteneceAReporte';
+const COLUMNS = 'id, url, foto, descripcion, fecha_creado, perteneceAReporte';
 const UPDATABLE = ['url', 'foto'];
 
 @Injectable()
@@ -72,6 +72,7 @@ function toEntity(row: any): Evidencia {
   evidencia.id = row.id;
   evidencia.url = row.url;
   evidencia.foto = row.foto;
+  evidencia.descripcion = row.descripcion;
   evidencia.fecha_creado = row.fecha_creado;
   evidencia.perteneceAReporte = row.perteneceAReporte;
   return evidencia;
