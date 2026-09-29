@@ -8,7 +8,6 @@ export class EvidenciaResponseDto {
   @ApiProperty({
     type: String,
     example: '/uploads/ana.png',
-    nullable: true,
     description: 'Ruta de la foto, relativa al servidor; null si no tiene',
   })
   foto: string;

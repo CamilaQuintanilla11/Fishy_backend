@@ -5,11 +5,11 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { sign, verify } from './jwt';
-import { hash } from './crypto';
 
 const ACCESS_TTL = 15 * 60;
 const REFRESH_TTL = 7 * 24 * 60 * 60;
 const ROL_DEFAULT = 'usuario';
+const bcrypt = require('bcrypt') as typeof import ('bcrypt');
 
 @Injectable()
 export class AuthService {
@@ -29,7 +29,7 @@ export class AuthService {
     const usuario = await this.usuarioRepository.save({
       nombre: dto.nombre,
       correo: dto.correo,
-      contrasenaHash: hash(dto.contrasena),
+      contrasenaHash: await bcrypt.hash(dto.contrasena, 10),
       tieneRol: rolDefault.id,
     });
     return { id: usuario.id, correo: usuario.correo };
@@ -38,14 +38,14 @@ export class AuthService {
   async login(dto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const usuario = await this.usuarioRepository.findByCorreo(dto.correo);
     if (!usuario) {
-      throw new UnauthorizedException('El usuario no existe');
-    }
-    if (usuario.contrasenaHash !== hash(dto.contrasena)) {
-      throw new UnauthorizedException('Contrasena incorrecta');
+      throw new UnauthorizedException('Error');
     }
 
-    // El JWT necesita el NOMBRE del rol (no solo la uuid) para que RolesGuard
-    // no tenga que consultar la base de datos en cada request protegido.
+    const contrasenaCorrecta = await bcrypt.compare(dto.contrasena, usuario.contrasenaHash,);
+    if (!contrasenaCorrecta) {
+      throw new UnauthorizedException('Error');
+    }
+
     const rol = await this.rolRepository.findById(usuario.tieneRol);
     if (!rol) {
       throw new Error(`El usuario tiene un tieneRol que no existe en la tabla rol`);

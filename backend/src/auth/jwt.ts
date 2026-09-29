@@ -1,6 +1,8 @@
 import { createHmac } from "crypto";
 
-const SECRET = 'FishySecret2026';
+function getSecret(): string {
+    return process.env.JWT_SECRET ??  'FishySecret2026';
+}
 
 export interface JwtPayload {
     sub: string;
@@ -21,7 +23,7 @@ function b64url(json: object): string {
 }
 
 function hmac(data: string): string {
-    return createHmac('sha256', SECRET).update(data).digest('base64url');
+    return createHmac('sha256',getSecret()).update(data).digest('base64url');
 }
 
 export function sign(payload: Omit<JwtPayload, 'iat' | 'exp'>, ttlSeconds: number): string {
