@@ -8,6 +8,7 @@ import { EstadoModule } from 'src/estado/estado.module';
 import { AuthModule } from '../auth/auth.module';
 import { RolModule } from 'src/rol/rol.module';
 import { ReporteCategoriaRepository } from './reporte-categoria.repository';
+import { CategoriaModule } from 'src/categoria/categoria.module';
 
 @Module({
   imports:[DatabaseModule, EstadoModule, RiesgoModule, AuthModule, RolModule, CategoriaModule],
