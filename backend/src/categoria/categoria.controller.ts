@@ -3,6 +3,8 @@ import { CategoriaService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 
 @UseGuards(AuthGuard)
 @Controller('categorias')
@@ -19,19 +21,25 @@ export class CategoriaController {
         return this.categoriaService.obtener(id);
     }
 
+    @UseGuards(RolesGuard)
+    @Roles('admin')
     @Post()
     crear(@Body() dto: CreateCategoriaDto) {
         return this.categoriaService.crear(dto);
     }
 
+    @UseGuards(RolesGuard)
+    @Roles('admin')
     @Patch(':id')
     actualizar(@Param('id') id: string, @Body() dto: UpdateCategoriaDto) {
         return this.categoriaService.actualizar(id, dto);
     }
 
+    @UseGuards(RolesGuard)
+    @Roles('admin')
     @Delete(':id')
     @HttpCode(204)
     eliminar(@Param('id') id: string) {
         return this.categoriaService.eliminar(id);
     }
-}
+}

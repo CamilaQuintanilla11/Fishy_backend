@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import type { JwtPayload } from 'src/auth/jwt';
 
 @UseGuards(AuthGuard)
 @Controller('usuarios')
@@ -19,7 +21,8 @@ export class UsuarioController {
     }
 
     @Get(':id')
-    obtener(@Param('id') id: string) {
+    obtener(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+        verificarPropio(user, id);
         return this.usuarioService.obtener(id)
     }
 
@@ -31,7 +34,8 @@ export class UsuarioController {
     }
 
     @Patch(':id')
-    actualizar(@Param('id') id:string, @Body() dto: UpdateUsuarioDto){
+    actualizar(@CurrentUser() user: JwtPayload, @Param('id') id:string, @Body() dto: UpdateUsuarioDto){
+        verificarPropio(user, id);
         return this.usuarioService.actualizar(id, dto);
     }
 
@@ -41,5 +45,11 @@ export class UsuarioController {
     @HttpCode(204)
     eliminar(@Param('id') id:string) {
         return this.usuarioService.eliminar(id);
+    }
+}
+
+function verificarPropio(user: JwtPayload, id: string): void {
+    if (user.sub !== id && user.rolNombre !== 'admin') {
+        throw new ForbiddenException('Solo puedes ver o editar tu propio usuario');
     }
 }
