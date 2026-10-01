@@ -8,12 +8,14 @@ import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
 import { Evidencia } from './entities/evidencia.entity';
 import { Reporte } from '../reporte/entities/reporte.entity';
+import { EstadoRepository } from 'src/estado/estado.repository';
 
 @Injectable()
 export class EvidenciaService {
   constructor(
     private readonly repository: EvidenciaRepository,
     private readonly reporteRepository: ReporteRepository,
+    private readonly estadoRepository: EstadoRepository,
   ) {}
 
 
@@ -28,9 +30,13 @@ export class EvidenciaService {
     return EvidenciaResponseDto.fromEntity(evidencia);
   }
 
-  async listar(): Promise<EvidenciaResponseDto[]> {
-    const evidencias = await this.repository.findAll();
-    return evidencias.map(EvidenciaResponseDto.fromEntity);
+  async listar(rolNombre: string): Promise<EvidenciaResponseDto[]> {
+    if (rolNombre === 'admin') {
+      return (await this.repository.findAll()).map(EvidenciaResponseDto.fromEntity);
+    }
+    const aprobado = await this.estadoRepository.findByNombre('aprobado');
+    if (!aprobado) throw new Error('No existe el estado "aprobado"');
+    return (await this.repository.findAllAprobadas(aprobado.id)).map(EvidenciaResponseDto.fromEntity);
   }
 
   async obtener(id: string): Promise<EvidenciaResponseDto> {

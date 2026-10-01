@@ -17,6 +17,18 @@ export class EvidenciaRepository {
     );
     return rows.map(toEntity);
   }
+ 
+  async findAllAprobadas(estadoAprobadoId: string): Promise<Evidencia[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT e.id, e.url, e.foto, e.fecha_creado, e.perteneceAReporte
+       FROM evidencia e
+       JOIN reporte r ON r.id = e.perteneceAReporte
+       WHERE r.tieneEstado = ?
+       ORDER BY e.fecha_creado DESC`,
+      [estadoAprobadoId],
+    );
+    return rows.map(toEntity);
+  }
 
   async findById(id: string): Promise<Evidencia | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(

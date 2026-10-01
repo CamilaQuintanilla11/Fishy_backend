@@ -4,8 +4,4 @@ export class CreateEstadoDto {
     @IsString()
     @IsNotEmpty()
     nombre: string;
-
-    @IsNotEmpty()
-    @IsString()
-    id: string;
 }

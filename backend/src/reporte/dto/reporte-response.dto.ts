@@ -8,14 +8,16 @@ export class ReporteResponseDto {
   perteneceA:string;
   tieneEstado: string;
   categorias: string[] = [];
-  static fromEntity(reporte: Reporte):ReporteResponseDto{
+  static fromEntity(reporte: Reporte, opts: { incluirDueno: boolean; }):ReporteResponseDto{
     const dto=new ReporteResponseDto();
     dto.id =reporte.id;
     dto.tieneRiesgo= reporte.tieneRiesgo;
     dto.fecha_pub=reporte.fecha_pub.toISOString();
     dto.fecha_update=reporte.fecha_update.toISOString();
     dto.fecha_aprob =reporte.fecha_aprob? reporte.fecha_aprob.toISOString(): null;
-    dto.perteneceA=reporte.perteneceA;
+    if (opts.incluirDueno) {
+      dto.perteneceA=reporte.perteneceA;
+    }
     dto.tieneEstado=reporte.tieneEstado;
     return dto;
   }

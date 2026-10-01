@@ -1,8 +1,3 @@
-declare module '@nestjs/common' {
-    export function Injectable(): ClassDecorator;
-    export function Inject(token: any): ParameterDecorator;
-}
-
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';

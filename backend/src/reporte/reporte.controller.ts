@@ -39,8 +39,8 @@ export class ReporteController{
   }
 
   @Get()
-  findAll():Promise<ReporteResponseDto[]>{
-    return this.service.findAll();
+  findAll(@CurrentUser() user: JwtPayload):Promise<ReporteResponseDto[]>{
+    return this.service.findAll(user.rolNombre);
   }
 
   @Get('pendientes')
@@ -51,8 +51,8 @@ export class ReporteController{
   }
 
   @Get(':id')
-  findOne(@Param('id') id:string): Promise<ReporteResponseDto> {
-    return this.service.findOne(id);
+  findOne(@Param('id') id:string, @CurrentUser() user: JwtPayload): Promise<ReporteResponseDto> {
+    return this.service.findOne(user.sub, id, user.rolNombre);
   }
 
   @Patch(':id')

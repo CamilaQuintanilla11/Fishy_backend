@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateEvidenciaDto {
   @IsString()
@@ -8,6 +8,7 @@ export class CreateEvidenciaDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   url: string;
 
   @IsString()

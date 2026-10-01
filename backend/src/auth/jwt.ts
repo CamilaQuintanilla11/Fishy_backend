@@ -1,7 +1,11 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 function getSecret(): string {
-    return process.env.JWT_SECRET ??  'FishySecret2026';
+    const s = process.env.JWT_SECRET;
+    if (!s) {
+        throw new Error('JWT_SECRET no definido en el entorno');
+    }
+    return s;
 }
 
 export interface JwtPayload {
@@ -38,10 +42,15 @@ export function verify(token: string): JwtPayload | null {
     if (!header || !body || !signature) {
         return null;
     }
-    if (hmac(`${header}.${body}`) !== signature) {
+    const esperada = hmac(`${header}.${body}`);
+
+    const expectedSignature = Buffer.from(signature);
+    const providedSignature = Buffer.from(esperada);
+
+    if (expectedSignature.length !== providedSignature.length || !timingSafeEqual(expectedSignature, providedSignature)) {
         return null;
     }
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as JwtPayload;
     if (payload.exp < now()) {
         return null;
     }

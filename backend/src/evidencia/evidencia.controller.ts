@@ -34,7 +34,7 @@ import { CreateEvidenciaDto } from './dto/create-evidencia.dto';
 import { UpdateEvidenciaDto } from './dto/update-evidencia.dto';
 
 const EXTENSIONES_PERMITIDAS = ['.png', '.jpg', '.jpeg', '.webp'];
-
+const limitSize = 5 * 1024 * 1024; 
 
 @ApiTags('evidencias')
 @ApiBearerAuth()
@@ -49,8 +49,8 @@ export class EvidenciaController {
   }
 
   @Get()
-  listar(): Promise<EvidenciaResponseDto[]> {
-    return this.service.listar();
+  listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
+    return this.service.listar(user.sub);
   }
 
   @Get(':id')
@@ -67,23 +67,24 @@ export class EvidenciaController {
     return this.service.actualizar(user.sub, id, dto);
   }
 
-  @Post(':id/photo')
-  @UseInterceptors(
-    FileInterceptor('photo', {
-      storage: diskStorage({
-        destination: 'uploads',
-        filename: (_req, file, cb) =>
-          cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
-      }),
-      fileFilter: (_req, file, cb) => {
-        const ext = extname(file.originalname).toLowerCase();
-        if (!file.mimetype.startsWith('image/') || !EXTENSIONES_PERMITIDAS.includes(ext)) {
-          return cb(new BadRequestException('Solo se permiten imagenes (png, jpg, jpeg, webp)'), false);
-        }
-        cb(null, true);
-      },
+@Post(':id/photo')
+@UseInterceptors(
+  FileInterceptor('photo', {
+    storage: diskStorage({
+      destination: 'uploads',
+      filename: (_req, file, cb) =>
+        cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
     }),
-  )
+    fileFilter: (_req, file, cb) => {
+      const ext = extname(file.originalname).toLowerCase();
+      if (!file.mimetype.startsWith('image/') || !EXTENSIONES_PERMITIDAS.includes(ext)) {
+        return cb(new BadRequestException('Solo se permiten imagenes (png, jpg, jpeg, webp)'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: limitSize },
+  }),
+)
   @ApiOperation({ summary: 'Subir o reemplazar la foto de una evidencia' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

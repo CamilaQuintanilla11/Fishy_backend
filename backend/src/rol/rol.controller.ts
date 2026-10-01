@@ -10,7 +10,9 @@ import { Roles } from 'src/auth/roles.decorator';
 @Controller('roles')
 export class RolController {
   constructor(private readonly rolService: RolService) {}
-
+  
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get()
   listar() {
     return this.rolService.listar();
