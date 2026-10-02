@@ -28,7 +28,7 @@ export class ReporteService {
     private readonly evidenciaRepository: EvidenciaRepository,
   ) {}
 
-  async create(userId: string, dto: CreateReporteDto): Promise<ReporteResponseDto> {
+  async create(userID: string, dto: CreateReporteDto): Promise<ReporteResponseDto> {
     const estadoInicial = await this.estadoRepository.findByNombre(ESTADO_INICIAL);
     if (!estadoInicial) {
       throw new Error(`No existe el estado "${ESTADO_INICIAL}"`);
@@ -42,12 +42,14 @@ export class ReporteService {
     }
 
     const reporte = await this.repository.save({
-      perteneceA: userId,
+      perteneceA: userID,
       tieneEstado: estadoInicial.id,
     });
     await this.reporteCategoriaRepository.agregarVarias(reporte.id, dto.categorias);
+    const response = ReporteResponseDto.fromEntity(reporte, { incluirDueno: false });
+    response.categorias = dto.categorias;
 
-    return ReporteResponseDto.fromEntity(reporte, { incluirDueno: false });
+    return response;
   }
 
 
@@ -64,7 +66,7 @@ export class ReporteService {
   return reportes.map((r) => ReporteResponseDto.fromEntity(r, { incluirDueno: false }));
 }
 
-  async findOne(userID: string, id: string, rolNombre: string): Promise<ReporteResponseDto> {
+  async findOne(userID: string, rolNombre: string, id: string): Promise<ReporteResponseDto> {
     const reporte = await this.obtenerReporte(id);
     const esAdmin = rolNombre === 'admin';
     const esDueno = reporte.perteneceA === userID;
@@ -77,23 +79,35 @@ export class ReporteService {
         throw new ForbiddenException('No puedes ver un reporte que no es tuyo y que no está aprobado');
       }
     }
-    const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno: false });
+    const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno: esAdmin, });
     dto.categorias = await this.reporteCategoriaRepository.findCategorias(id);
     return dto;
   }
 
-  async update(userId: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
-    await this.obtenerReportePropio(userId, id);
+  async update(userID: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
+    await this.obtenerReportePropio(userID, id);
     if (changes.categorias) {
+      for (const categoriaId of changes.categorias) {
+        const categoria = await this.categoriaRepository.findById(categoriaId);
+        if (!categoria) {
+          throw new NotFoundException(`La categoría no existe`);
+        }
+      }
       await this.reporteCategoriaRepository.eliminarTodas(id);
       await this.reporteCategoriaRepository.agregarVarias(id, changes.categorias);
     }
     const updated = (await this.repository.findById(id))!;
-    return ReporteResponseDto.fromEntity(updated, { incluirDueno: false });
+    const response = ReporteResponseDto.fromEntity(updated, { incluirDueno: false });
+    if (changes.categorias) {
+      response.categorias = changes.categorias;
+    } else {
+      response.categorias = await this.reporteCategoriaRepository.findCategorias(id);
+    }
+    return response;
   }
 
-  async remove(userId: string, id: string): Promise<void> {
-    await this.obtenerReportePropio(userId, id);
+  async remove(userID: string, id: string): Promise<void> {
+    await this.obtenerReportePropio(userID, id);
     const evidencias = await this.evidenciaRepository.findByReporteId(id);
     await this.repository.delete(id);
     await Promise.all(evidencias.filter((e) => e.foto).map((e) => unlink(join('uploads', e.foto)).catch(() => undefined)));
@@ -105,28 +119,36 @@ export class ReporteService {
       throw new Error(`No existe el estado "${ESTADO_INICIAL}"`);
     }
     const reportes = await this.repository.findAllByEstado(pendiente.id);
-    return reportes.map((r) => ReporteResponseDto.fromEntity(r, { incluirDueno: false }));
+
+    const respuestas = await Promise.all(reportes.map(async (r) => {
+      const dto = ReporteResponseDto.fromEntity(r, { incluirDueno: true });
+      dto.categorias = await this.reporteCategoriaRepository.findCategorias(r.id);
+      return dto;
+    }));
+
+    return respuestas;
   }
 
-async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
-  const reporte = await this.obtenerReporte(id);
 
-  const pendiente = await this.estadoRepository.findByNombre('pendiente');
-  if (reporte.tieneEstado !== pendiente?.id) {
-    throw new BadRequestException('Este reporte ya fue moderado');
+  async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
+    const reporte = await this.obtenerReporte(id);
+
+    const pendiente = await this.estadoRepository.findByNombre('pendiente');
+    if (reporte.tieneEstado !== pendiente?.id) {
+      throw new BadRequestException('Este reporte ya fue moderado');
+    }
+
+    const nuevoEstado = await this.estadoRepository.findById(dto.tieneEstado);
+    if (!nuevoEstado) throw new NotFoundException('El estado no existe.');
+
+    const cambios: Partial<Reporte> = { tieneEstado: dto.tieneEstado };
+    if (nuevoEstado.nombre === 'aprobado') {
+      cambios.fecha_aprob = new Date(); 
+    }
+
+    const updated = (await this.repository.update(id, cambios))!;
+    return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
   }
-
-  const nuevoEstado = await this.estadoRepository.findById(dto.tieneEstado);
-  if (!nuevoEstado) throw new NotFoundException('El estado no existe.');
-
-  const cambios: Partial<Reporte> = { tieneEstado: dto.tieneEstado };
-  if (nuevoEstado.nombre === 'aprobado') {
-    cambios.fecha_aprob = new Date(); // solo se llena si SI se aprueba
-  }
-
-  const updated = (await this.repository.update(id, cambios))!;
-  return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
-}
 
   private async obtenerReporte(id: string): Promise<Reporte> {
     const reporte = await this.repository.findById(id);
@@ -136,9 +158,9 @@ async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
     return reporte;
   }
 
-  private async obtenerReportePropio(userId: string, id: string): Promise<Reporte> {
+  private async obtenerReportePropio(userID: string, id: string): Promise<Reporte> {
     const reporte = await this.obtenerReporte(id);
-    if (reporte.perteneceA !== userId) {
+    if (reporte.perteneceA !== userID) {
       throw new ForbiddenException('No puedes modificar un reporte que no es tuyo');
     }
     const pendiente = await this.estadoRepository.findByNombre('pendiente');
