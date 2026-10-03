@@ -18,25 +18,22 @@ export class UsuarioRepository {
     }
     async findById(id: string): Promise<Usuario | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM usuario WHERE id = ?`,
-            [id], 
+            `SELECT ${COLUMNS} FROM usuario WHERE id = '${id}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
     async findByCorreo(correo: string): Promise<Usuario | undefined>{
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM usuario WHERE correo = ?`,
-            [correo], 
+            `SELECT ${COLUMNS} FROM usuario WHERE correo = '${correo}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
     async save(usuario: Omit<Usuario, 'id' | 'fecha_creado'>): Promise<Usuario> {
         const id = randomUUID();
         await this.pool.query(
-            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES (?, ?, ?, ?, ?)`,
-            [id, usuario.nombre, usuario.correo, usuario.contrasenaHash, usuario.tieneRol],
-    );
-    return (await this.findById(id))!;
+            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES ('${id}', '${usuario.nombre}', '${usuario.correo}', '${usuario.contrasenaHash}', ${usuario.tieneRol})`
+        );
+        return (await this.findById(id))!;
     }
     async update(id: string, changes: Partial<Usuario>): Promise<Usuario | undefined> {
         const allowedColumns = ['nombre', 'correo', 'contrasenaHash'];
@@ -46,13 +43,13 @@ export class UsuarioRepository {
         const sets = entries.map(([column]) => `${column} = ?`).join(', ');
         const values = entries.map(([, value]) => value);
 
-        await this.pool.query(`UPDATE usuario SET ${sets} WHERE id = ?`, [...values, id]);
+        await this.pool.query(`UPDATE usuario SET ${sets} WHERE id = '${id}'`, [...values]);
         return this.findById(id);
     }
 
     async delete(id: string): Promise<boolean> {
         const [result] = await this.pool.query<ResultSetHeader> (
-            `DELETE FROM usuario WHERE id = ?`,
+            `DELETE FROM usuario WHERE id = '${id}'`,
             [id],
         );
         return result.affectedRows > 0;
