@@ -19,24 +19,21 @@ export class RolRepository {
 
     async findById(id: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE id = ?`,
-            [id],
+            `SELECT ${COLUMNS} FROM rol WHERE id = '${id}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
 
     async findByNombre(nombre: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE nombre = ?`,
-            [nombre],           
+            `SELECT ${COLUMNS} FROM rol WHERE nombre = '${nombre}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
 
     async findByGatename(gatename: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE gatename = ?`,
-            [gatename],           
+            `SELECT ${COLUMNS} FROM rol WHERE gatename = '${gatename}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
