@@ -41,8 +41,7 @@ export class RolRepository {
     async save(rol: Omit<Rol, 'id'>): Promise<Rol> {
         const id = randomUUID();
         await this.pool.query(
-           `INSERT INTO rol (id, nombre, gatename) VALUES (?, ?, ?)`,
-            [id, rol.nombre, rol.gatename],
+           `INSERT INTO rol (id, nombre, gatename) VALUES ('${id}', '${rol.nombre}', '${rol.gatename}')`,
         );
         return (await this.findById(id))!;
     }
@@ -55,14 +54,13 @@ export class RolRepository {
         const sets = entries.map(([column]) => `${column} = ?`).join(', ');
         const values = entries.map(([, value]) => value);
 
-        await this.pool.query(`UPDATE rol SET ${sets} WHERE id = ?`, [...values, id]);
+        await this.pool.query(`UPDATE rol SET ${sets} WHERE id = '${id}'`, [...values, id]);
         return this.findById(id);
     }
 
     async delete(id: string): Promise<boolean> {
         const [result] = await this.pool.query<ResultSetHeader>(
-            `DELETE FROM rol WHERE id = ?`,
-            [id],
+            `DELETE FROM rol WHERE id = '${id}'`,
         );
         return result.affectedRows > 0;
     }
