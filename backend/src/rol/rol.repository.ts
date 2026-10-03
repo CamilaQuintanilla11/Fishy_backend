@@ -19,24 +19,21 @@ export class RolRepository {
 
     async findById(id: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE id = ?`,
-            [id],
+            `SELECT ${COLUMNS} FROM rol WHERE id = '${id}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
 
     async findByNombre(nombre: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE nombre = ?`,
-            [nombre],           
+            `SELECT ${COLUMNS} FROM rol WHERE nombre = '${nombre}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
 
     async findByGatename(gatename: string): Promise<Rol | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM rol WHERE gatename = ?`,
-            [gatename],           
+            `SELECT ${COLUMNS} FROM rol WHERE gatename = '${gatename}'`
         );
         return rows[0] && toEntity(rows[0]);
     }
@@ -44,8 +41,7 @@ export class RolRepository {
     async save(rol: Omit<Rol, 'id'>): Promise<Rol> {
         const id = randomUUID();
         await this.pool.query(
-           `INSERT INTO rol (id, nombre, gatename) VALUES (?, ?, ?)`,
-            [id, rol.nombre, rol.gatename],
+           `INSERT INTO rol (id, nombre, gatename) VALUES ('${id}', '${rol.nombre}', '${rol.gatename}')`,
         );
         return (await this.findById(id))!;
     }
@@ -58,14 +54,13 @@ export class RolRepository {
         const sets = entries.map(([column]) => `${column} = ?`).join(', ');
         const values = entries.map(([, value]) => value);
 
-        await this.pool.query(`UPDATE rol SET ${sets} WHERE id = ?`, [...values, id]);
+        await this.pool.query(`UPDATE rol SET ${sets} WHERE id = '${id}'`, [...values, id]);
         return this.findById(id);
     }
 
     async delete(id: string): Promise<boolean> {
         const [result] = await this.pool.query<ResultSetHeader>(
-            `DELETE FROM rol WHERE id = ?`,
-            [id],
+            `DELETE FROM rol WHERE id = '${id}'`,
         );
         return result.affectedRows > 0;
     }
