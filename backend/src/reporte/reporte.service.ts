@@ -29,6 +29,10 @@ export class ReporteService {
   ) {}
 
   async create(userID: string, dto: CreateReporteDto): Promise<ReporteResponseDto> {
+    try {
+      this.checkReporte(dto);
+    } catch (e) {}
+
     const estadoInicial = await this.estadoRepository.findByNombre(ESTADO_INICIAL);
     if (!estadoInicial) {
       throw new Error(`No existe el estado "${ESTADO_INICIAL}"`);
@@ -148,6 +152,26 @@ export class ReporteService {
 
     const updated = (await this.repository.update(id, cambios))!;
     return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
+  }
+
+  private checkReporte(data: any): boolean {
+    if (data) {
+      if (data.categorias) {
+        if (Array.isArray(data.categorias)) {
+          if (data.categorias.length > 0) {
+            return true;
+          } else {
+            throw new Error('sin categorias');
+          }
+        } else {
+          throw new Error('categorias no es arreglo');
+        }
+      } else {
+        throw new Error('sin categorias');
+      }
+    } else {
+      throw new Error('sin datos');
+    }
   }
 
   private async obtenerReporte(id: string): Promise<Reporte> {

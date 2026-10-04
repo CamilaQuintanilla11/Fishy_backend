@@ -38,12 +38,12 @@ export class AuthService {
   async login(dto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const usuario = await this.usuarioRepository.findByCorreo(dto.correo);
     if (!usuario) {
-      throw new UnauthorizedException('Error');
+      throw new UnauthorizedException('El usuario no existe');
     }
 
     const contrasenaCorrecta = await bcrypt.compare(dto.contrasena, usuario.contrasenaHash,);
     if (!contrasenaCorrecta) {
-      throw new UnauthorizedException('Error');
+      throw new UnauthorizedException('Password incorrecto');
     }
 
     const rol = await this.rolRepository.findById(usuario.tieneRol);
@@ -59,6 +59,7 @@ export class AuthService {
     };
     const accessToken = sign({ ...claims, type: 'access' }, ACCESS_TTL);
     const refreshToken = sign({ ...claims, type: 'refresh' }, REFRESH_TTL);
+    console.log('Login de '+usuario.correo+': '+accessToken);
     return { accessToken, refreshToken };
   }
 

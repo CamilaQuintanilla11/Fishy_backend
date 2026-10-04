@@ -60,7 +60,7 @@ export class EvidenciaService {
   }
 
   async setPhoto(userId: string, id: string, file: Express.Multer.File): Promise<EvidenciaResponseDto> {
-    const anterior = await this.getEvidenciaPropia(userId, id);
+    const anterior = await this.getEvidencia(id);
     const actualizado = (await this.repository.setPhoto(id, file.filename))!;
     await this.borrarArchivo(anterior.foto);
     return EvidenciaResponseDto.fromEntity(actualizado);

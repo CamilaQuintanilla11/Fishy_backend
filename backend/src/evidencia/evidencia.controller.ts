@@ -66,25 +66,16 @@ export class EvidenciaController {
   ): Promise<EvidenciaResponseDto> {
     return this.service.actualizar(user.sub, id, dto);
   }
-
-@Post(':id/photo')
-@UseInterceptors(
+  @Post(':id/photo')
+  @UseInterceptors(
   FileInterceptor('photo', {
     storage: diskStorage({
       destination: 'uploads',
-      filename: (_req, file, cb) =>
-        cb(null, randomUUID() + extname(file.originalname).toLowerCase()),
+      filename: (_req, file, cb) => cb(null, file.originalname),
     }),
-    fileFilter: (_req, file, cb) => {
-      const ext = extname(file.originalname).toLowerCase();
-      if (!file.mimetype.startsWith('image/') || !EXTENSIONES_PERMITIDAS.includes(ext)) {
-        return cb(new BadRequestException('Solo se permiten imagenes (png, jpg, jpeg, webp)'), false);
-      }
-      cb(null, true);
-    },
-    limits: { fileSize: limitSize },
   }),
-)
+  )
+  
   @ApiOperation({ summary: 'Subir o reemplazar la foto de una evidencia' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

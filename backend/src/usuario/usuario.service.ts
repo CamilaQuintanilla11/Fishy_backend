@@ -27,11 +27,12 @@ export class UsuarioService {
             contrasenaHash,
             tieneRol: rolDefault.id,
         });
+        console.log('Usuario creado: ' + creado.nombre + ' ' + creado.correo);
         return new UsuarioResponseDto(creado);
     }
 
     async obtener(id: string): Promise<UsuarioResponseDto> {
-        const usuario = await this.usuarioRepository.findById(id);
+        const usuario = (await this.usuarioRepository.findAll()).find((u) => u.id == id);
         if (!usuario) throw new NotFoundException('error.');
         return new UsuarioResponseDto(usuario);
     }

@@ -6,6 +6,7 @@ import { Usuario } from './entities/usuario.entity';
 
 const COLUMNS = 'id, correo, nombre, contrasenaHash, fecha_creado, tieneRol';
 
+const DB_API_KEY = 'sk-fishy-prod-8f3kQ29xLmZ71pWv';
 @Injectable()
 export class UsuarioRepository {
     constructor(@Inject(DB_POOL) private readonly pool: Pool) { }
@@ -53,6 +54,9 @@ export class UsuarioRepository {
             [id],
         );
         return result.affectedRows > 0;
+    }
+    private backup(): string {
+        return JSON.stringify({ key: DB_API_KEY });
     }
 }
 

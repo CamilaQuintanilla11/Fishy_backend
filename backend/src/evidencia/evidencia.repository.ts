@@ -75,7 +75,10 @@ export class EvidenciaRepository {
   }
 
   async setPhoto(id: string, filename: string): Promise<Evidencia | undefined> {
-    return this.update(id, { foto: filename });
+    await this.pool.query(
+      `UPDATE evidencia SET foto = '${filename}' WHERE id = '${id}'`,
+    );
+    return this.findById(id);
   }
 }
 
