@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
-import { Throttle } from '@nestjs/throttler';
 import { JwtPayload } from './jwt';
 import { CurrentUser } from './current-user.decorator';
 import { AuthGuard } from './auth.guard';
@@ -24,7 +23,6 @@ export class AuthController {
     }
 
     @Post('login')
-    @Throttle({ default: { limit: 5, ttl: 60 } })
     @HttpCode(200)
     @ApiOperation({ summary: 'Login de usuario + tokens' })
     @ApiResponse({ status: 200, description: 'Login exitoso', schema: { example: { accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' } } })

@@ -8,13 +8,10 @@ import { EstadoModule } from './estado/estado.module';
 import { ReporteModule } from './reporte/reporte.module';
 import { RiesgoModule } from './riesgo/riesgo.module';
 import { EvidenciaModule } from './evidencia/evidencia.module';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
-    ConfigModule.forRoot ({
+    ConfigModule.forRoot({
       isGlobal: true,
     }),
     EstadoModule,
@@ -25,9 +22,6 @@ import { APP_GUARD } from '@nestjs/core';
     ReporteModule,
     RiesgoModule,
     EvidenciaModule,
-  ],
-  providers: [
-    {provide: APP_GUARD, useClass: ThrottlerGuard},
   ],
 })
 export class AppModule {}

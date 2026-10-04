@@ -52,7 +52,7 @@ export class ReporteController{
 
   @Get(':id')
   findOne(@Param('id') id:string, @CurrentUser() user: JwtPayload): Promise<ReporteResponseDto> {
-    return this.service.findOne(user.sub, id, user.rolNombre);
+    return this.service.findOne(user.sub, user.rolNombre, id);
   }
 
   @Patch(':id')

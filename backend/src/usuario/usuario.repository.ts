@@ -31,7 +31,7 @@ export class UsuarioRepository {
     async save(usuario: Omit<Usuario, 'id' | 'fecha_creado'>): Promise<Usuario> {
         const id = randomUUID();
         await this.pool.query(
-            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES ('${id}', '${usuario.nombre}', '${usuario.correo}', '${usuario.contrasenaHash}', ${usuario.tieneRol})`
+            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES ('${id}', '${usuario.nombre}', '${usuario.correo}', '${usuario.contrasenaHash}', '${usuario.tieneRol}')`
         );
         return (await this.findById(id))!;
     }

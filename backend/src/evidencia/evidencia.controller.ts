@@ -50,7 +50,7 @@ export class EvidenciaController {
 
   @Get()
   listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
-    return this.service.listar(user.sub);
+    return this.service.listar(user.rolNombre);
   }
 
   @Get(':id')
