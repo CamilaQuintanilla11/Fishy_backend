@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS reporte (
     FOREIGN KEY (tieneRiesgo) REFERENCES riesgo(id)
 );
 
+CREATE TABLE IF NOT EXISTS reporte_like (
+    usuario_id CHAR(36) NOT NULL,
+    reporte_id CHAR(36) NOT NULL,
+    fecha_like TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (usuario_id, reporte_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
+    FOREIGN KEY (reporte_id) REFERENCES reporte(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS evidencia (
     id CHAR(36) PRIMARY KEY,
     url VARCHAR(255) NOT NULL,
@@ -67,4 +77,21 @@ CREATE TABLE IF NOT EXISTS reporte_categoria (
     PRIMARY KEY (reporte_id, categoria_id),
     FOREIGN KEY (reporte_id) REFERENCES reporte(id) ON DELETE CASCADE,
     FOREIGN KEY (categoria_id) REFERENCES categoria(id)
+);
+
+CREATE TABLE IF NOT EXISTS lecturas (
+    id CHAR(36) PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    contenido TEXT NOT NULL,
+    orden INT NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS progreso_leecturas (
+    usuario_id CHAR(36) NOT NULL,
+    lectura_id CHAR(36) NOT NULL,
+    completada BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_completado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (usuario_id, lectura_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
+    FOREIGN KEY (lectura_id) REFERENCES lecturas(id)
 );
