@@ -20,7 +20,7 @@ export class EvidenciaRepository {
  
   async findAllAprobadas(estadoAprobadoId: string): Promise<Evidencia[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT e.id, e.url, e.foto, e.fecha_creado, e.perteneceAReporte
+      `SELECT e.id, e.url, e.foto, e.fecha_creado, e.perteneceAReporte, e.descripcion
        FROM evidencia e
        JOIN reporte r ON r.id = e.perteneceAReporte
        WHERE r.tieneEstado = ?

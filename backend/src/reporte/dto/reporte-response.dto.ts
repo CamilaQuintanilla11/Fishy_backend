@@ -1,3 +1,4 @@
+import { EvidenciaResponseDto } from 'src/evidencia/dto/evidencia-response.dto';
 import { Reporte } from '../entities/reporte.entity';
 export class ReporteResponseDto {
   id: string;
@@ -8,6 +9,8 @@ export class ReporteResponseDto {
   perteneceA:string;
   tieneEstado: string;
   categorias: string[] = [];
+  evidencias: EvidenciaResponseDto[] = [];
+
   static fromEntity(reporte: Reporte, opts: { incluirDueno: boolean; }):ReporteResponseDto{
     const dto=new ReporteResponseDto();
     dto.id =reporte.id;

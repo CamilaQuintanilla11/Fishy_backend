@@ -13,6 +13,7 @@ import { Inject, forwardRef } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { EvidenciaRepository } from '../evidencia/evidencia.repository';
+import { EvidenciaResponseDto } from 'src/evidencia/dto/evidencia-response.dto';
 
 const ESTADO_INICIAL = 'pendiente';
 
@@ -57,17 +58,39 @@ export class ReporteService {
   }
 
 
-  async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
-    if (rolNombre === 'admin') {
-    const todos = await this.repository.findAll();
-    return todos.map((r) => ReporteResponseDto.fromEntity(r, { incluirDueno: true }));
+async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
+  let reportes: Reporte[];
+
+  if (rolNombre === 'admin') {
+    reportes = await this.repository.findAll();
+  } else {
+    const aprobado = await this.estadoRepository.findByNombre('aprobado');
+
+    if (!aprobado) {
+      throw new Error('No existe el estado "aprobado"');
+    }
+
+    reportes = await this.repository.findAllByEstado(aprobado.id);
   }
-  const aprobado = await this.estadoRepository.findByNombre('aprobado');
-  if (!aprobado) {
-    throw new Error('No existe el estado "aprobado"');
-  }
-  const reportes = await this.repository.findAllByEstado(aprobado.id);
-  return reportes.map((r) => ReporteResponseDto.fromEntity(r, { incluirDueno: false }));
+
+  return Promise.all(
+    reportes.map(async (reporte) => {
+      const dto = ReporteResponseDto.fromEntity(reporte, {
+        incluirDueno: rolNombre === 'admin',
+      });
+
+      dto.categorias =
+        await this.reporteCategoriaRepository.findCategorias(reporte.id);
+
+      const evidencias =
+        await this.evidenciaRepository.findByReporteId(reporte.id);
+
+      dto.evidencias =
+        evidencias.map(EvidenciaResponseDto.fromEntity);
+
+      return dto;
+    }),
+  );
 }
 
   async findOne(userID: string, rolNombre: string, id: string): Promise<ReporteResponseDto> {
@@ -85,6 +108,8 @@ export class ReporteService {
     }
     const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno: esAdmin, });
     dto.categorias = await this.reporteCategoriaRepository.findCategorias(id);
+    const evidencias = await this.evidenciaRepository.findByReporteId(id);
+    dto.evidencias = evidencias.map(EvidenciaResponseDto.fromEntity);
     return dto;
   }
 

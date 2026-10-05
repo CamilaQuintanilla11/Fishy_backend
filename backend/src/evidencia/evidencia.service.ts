@@ -19,17 +19,18 @@ export class EvidenciaService {
   ) {}
 
 
-  async crear(userId: string, dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
-    await this.getReportePropio(userId, dto.perteneceAReporte);
-    const evidencia = await this.repository.save({
-      url: dto.url,
-      foto: '', 
-      descripcion: dto.descripcion,
-      perteneceAReporte: dto.perteneceAReporte,
-    });
-    return EvidenciaResponseDto.fromEntity(evidencia);
-  }
+async crear(userID: string, dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
+  await this.getReportePropio(userID, dto.perteneceAReporte);
 
+  const evidencia = await this.repository.save({
+    url: dto.url,
+    foto: '',
+    descripcion: dto.descripcion,
+    perteneceAReporte: dto.perteneceAReporte,
+  });
+
+  return EvidenciaResponseDto.fromEntity(evidencia);
+}
   async listar(rolNombre: string): Promise<EvidenciaResponseDto[]> {
     if (rolNombre === 'admin') {
       return (await this.repository.findAll()).map(EvidenciaResponseDto.fromEntity);
@@ -53,21 +54,21 @@ export class EvidenciaService {
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
-  async actualizar(userId: string, id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
-    await this.getEvidenciaPropia(userId, id);
+  async actualizar(userID: string, id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
+    await this.getEvidenciaPropia(userID, id);
     const actualizado = await this.repository.update(id, dto);
     return EvidenciaResponseDto.fromEntity(actualizado!);
   }
 
-  async setPhoto(userId: string, id: string, file: Express.Multer.File): Promise<EvidenciaResponseDto> {
+  async setPhoto(userID: string, id: string, file: Express.Multer.File): Promise<EvidenciaResponseDto> {
     const anterior = await this.getEvidencia(id);
     const actualizado = (await this.repository.setPhoto(id, file.filename))!;
     await this.borrarArchivo(anterior.foto);
     return EvidenciaResponseDto.fromEntity(actualizado);
   }
 
-  async eliminar(userId: string, id: string): Promise<void> {
-    const evidencia = await this.getEvidenciaPropia(userId, id);
+  async eliminar(userID: string, id: string): Promise<void> {
+    const evidencia = await this.getEvidenciaPropia(userID, id);
     await this.repository.delete(id);
     await this.borrarArchivo(evidencia.foto);
   }

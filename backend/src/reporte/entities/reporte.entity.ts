@@ -1,3 +1,5 @@
+import { Evidencia } from "src/evidencia/entities/evidencia.entity";
+
 export class Reporte {
   id: string;
 
@@ -8,4 +10,5 @@ export class Reporte {
   perteneceA: string;
   tieneEstado: string;
   tieneRiesgo: string | null;
+  evidencias: Evidencia[];
 }
