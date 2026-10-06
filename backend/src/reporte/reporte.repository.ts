@@ -43,7 +43,7 @@ export class ReporteRepository {
   async save (data:{titulo: string; perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO reporte (id, titulo, perteneceA, tieneEstado) VALUES '${id}', '${data.titulo}', '${data.perteneceA}', '${data.tieneEstado}'`,
+      `INSERT INTO reporte (id, titulo, perteneceA, tieneEstado) VALUES ('${id}', '${data.titulo}', '${data.perteneceA}', '${data.tieneEstado}')`,
 
     );
     return (await this.findById(id))!;
