@@ -19,16 +19,14 @@ export class RiesgoRepository {
 
     async findById(id: string): Promise<Riesgo | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM riesgo WHERE id = ?`,
-            [id]
+            `SELECT ${COLUMNS} FROM riesgo WHERE id = '${id}'`
         );
         return rows.length > 0 ? toEntity(rows[0]) : undefined;
     }
 
     async findByNombre(nombre: string): Promise<Riesgo | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM riesgo WHERE nombre = ?`,
-            [nombre]
+            `SELECT ${COLUMNS} FROM riesgo WHERE nombre = '${nombre}'`
         );
         return rows.length > 0 ? toEntity(rows[0]) : undefined;
     }

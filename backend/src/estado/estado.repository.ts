@@ -18,16 +18,14 @@ export class EstadoRepository {
 
     async findById(id: string): Promise<Estado | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM estado WHERE id = ?`,
-            [id],
+            `SELECT ${COLUMNS} FROM estado WHERE id = '${id}'`,
         );
         return rows[0] && toEntity(rows[0]);
     }
 
     async findByNombre(nombre: string): Promise<Estado | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM estado WHERE nombre = ?`,
-            [nombre],           
+            `SELECT ${COLUMNS} FROM estado WHERE nombre = '${nombre}'`,
         );
         return rows[0] && toEntity(rows[0]);
     }

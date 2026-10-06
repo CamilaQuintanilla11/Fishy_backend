@@ -23,7 +23,7 @@ export class EvidenciaRepository {
       `SELECT e.id, e.url, e.foto, e.fecha_creado, e.perteneceAReporte, e.descripcion
        FROM evidencia e
        JOIN reporte r ON r.id = e.perteneceAReporte
-       WHERE r.tieneEstado = ?
+       WHERE r.tieneEstado = '${estadoAprobadoId}'
        ORDER BY e.fecha_creado DESC`,
       [estadoAprobadoId],
     );
@@ -32,16 +32,14 @@ export class EvidenciaRepository {
 
   async findById(id: string): Promise<Evidencia | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM evidencia WHERE id = ?`,
-      [id],
+      `SELECT ${COLUMNS} FROM evidencia WHERE id = '${id}'`,
     );
     return rows[0] && toEntity(rows[0]);
   }
 
   async findByReporteId(reporteId: string): Promise<Evidencia[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM evidencia WHERE perteneceAReporte = ? ORDER BY fecha_creado DESC`,
-      [reporteId],
+      `SELECT ${COLUMNS} FROM evidencia WHERE perteneceAReporte = '${reporteId}' ORDER BY fecha_creado DESC`,
     );
     return rows.map(toEntity);
   }
@@ -49,8 +47,7 @@ export class EvidenciaRepository {
   async save(data: { url: string; foto: string; descripcion:string; perteneceAReporte: string }): Promise<Evidencia> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO evidencia (id, url, foto, descripcion, perteneceAReporte) VALUES (?, ?, ?, ?, ?)`,
-      [id, data.url, data.foto, data.descripcion, data.perteneceAReporte],
+      `INSERT INTO evidencia (id, url, foto, descripcion, perteneceAReporte) VALUES ('${id}', '${data.url}', '${data.foto}', '${data.descripcion}', '${data.perteneceAReporte}')`,
     );
     return (await this.findById(id))!;
   }
@@ -62,14 +59,13 @@ export class EvidenciaRepository {
     if (entries.length === 0) return this.findById(id);
     const sets = entries.map(([column]) => `${column} = ?`).join(', ');
     const values = entries.map(([, value]) => value);
-    await this.pool.query(`UPDATE evidencia SET ${sets} WHERE id = ?`, [...values, id]);
+    await this.pool.query(`UPDATE evidencia SET ${sets} WHERE id = '${id}'`, [...values, id]);
     return this.findById(id);
   }
 
   async delete(id: string): Promise<boolean> {
     const [result] = await this.pool.query<ResultSetHeader>(
-      `DELETE FROM evidencia WHERE id = ?`,
-      [id],
+      `DELETE FROM evidencia WHERE id = '${id}'`,
     );
     return result.affectedRows > 0;
   }
