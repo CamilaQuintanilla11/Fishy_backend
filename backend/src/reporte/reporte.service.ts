@@ -47,6 +47,7 @@ export class ReporteService {
     }
 
     const reporte = await this.repository.save({
+      titulo: dto.titulo,
       perteneceA: userID,
       tieneEstado: estadoInicial.id,
     });
@@ -124,6 +125,9 @@ async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
       }
       await this.reporteCategoriaRepository.eliminarTodas(id);
       await this.reporteCategoriaRepository.agregarVarias(id, changes.categorias);
+    }
+    if (changes.titulo) {
+      await this.repository.update(id, { titulo: changes.titulo });
     }
     const updated = (await this.repository.findById(id))!;
     const response = ReporteResponseDto.fromEntity(updated, { incluirDueno: false });

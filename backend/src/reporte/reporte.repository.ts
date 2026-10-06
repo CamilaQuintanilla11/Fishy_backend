@@ -4,9 +4,9 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Reporte } from './entities/reporte.entity';
 
-const COLUMNS= 'id, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado, tieneRiesgo';
+const COLUMNS= 'id, titulo, fecha_pub, fecha_update, fecha_aprob, perteneceA, tieneEstado, tieneRiesgo';
 
-const UPDATE = ['tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
+const UPDATE = ['titulo', 'tieneRiesgo', 'tieneEstado', 'fecha_aprob'];
 
 @Injectable()
 export class ReporteRepository {
@@ -21,33 +21,30 @@ export class ReporteRepository {
 
   async findAllByUsuario(perteneceA: string):Promise<Reporte[]> {
     const [rows]=await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE perteneceA = ? ORDER BY fecha_pub DESC`,
-      [perteneceA]
+      `SELECT ${COLUMNS} FROM reporte WHERE perteneceA = '${perteneceA}' ORDER BY fecha_pub DESC`,
     );
     return rows.map(toEntity);
   }
 
   async findAllByEstado(estadoID: string): Promise<Reporte[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE tieneEstado = ? ORDER BY fecha_pub`,
-      [estadoID],
+      `SELECT ${COLUMNS} FROM reporte WHERE tieneEstado = '${estadoID}' ORDER BY fecha_pub`,
     );
     return rows.map(toEntity);
   }
 
   async findById(id: string): Promise<Reporte | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE id = ?`,
-      [id],
+      `SELECT ${COLUMNS} FROM reporte WHERE id = '${id}'`,
     );
     return rows[0] && toEntity(rows[0]);
   }
 
-  async save (data:{perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
+  async save (data:{titulo: string; perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO reporte (id, perteneceA, tieneEstado) VALUES (?,?,?)`,
-      [id, data.perteneceA, data.tieneEstado],
+      `INSERT INTO reporte (id, titulo, perteneceA, tieneEstado) VALUES '${id}', '${data.titulo}', '${data.perteneceA}', '${data.tieneEstado}'`,
+
     );
     return (await this.findById(id))!;
   }
@@ -60,7 +57,7 @@ export class ReporteRepository {
     const values = entries.map(([, value]) => value);
 
     await this.pool.query(
-      `UPDATE reporte SET ${sets} WHERE id = ?`,
+      `UPDATE reporte SET ${sets} WHERE id = '${id}'`,
       [...values, id],
     );
     return this.findById(id);
@@ -68,8 +65,7 @@ export class ReporteRepository {
   async delete(id: string):Promise<boolean> {
     const [result]=await this.pool.query<ResultSetHeader>
     (
-      `DELETE FROM reporte WHERE id = ?`,
-      [id]
+      `DELETE FROM reporte WHERE id = '${id}'`,
     );
     return result.affectedRows>0;
   }
@@ -78,6 +74,7 @@ export class ReporteRepository {
 function toEntity(row: any): Reporte {
   const reporte=new Reporte();
   reporte.id = row.id;
+  reporte.titulo = row.titulo;
   reporte.fecha_pub=row.fecha_pub;
   reporte.fecha_update= row.fecha_update;
   reporte.fecha_aprob= row.fecha_aprob ?? undefined;

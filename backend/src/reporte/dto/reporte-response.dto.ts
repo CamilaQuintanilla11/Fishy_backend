@@ -2,6 +2,7 @@ import { EvidenciaResponseDto } from 'src/evidencia/dto/evidencia-response.dto';
 import { Reporte } from '../entities/reporte.entity';
 export class ReporteResponseDto {
   id: string;
+  titulo: string;
   tieneRiesgo:string | null;
   fecha_pub: string;
   fecha_update:string;
@@ -14,6 +15,7 @@ export class ReporteResponseDto {
   static fromEntity(reporte: Reporte, opts: { incluirDueno: boolean; }):ReporteResponseDto{
     const dto=new ReporteResponseDto();
     dto.id =reporte.id;
+    dto.titulo= reporte.titulo;
     dto.tieneRiesgo= reporte.tieneRiesgo;
     dto.fecha_pub=reporte.fecha_pub.toISOString();
     dto.fecha_update=reporte.fecha_update.toISOString();
