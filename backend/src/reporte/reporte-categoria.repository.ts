@@ -37,13 +37,13 @@ export class ReporteCategoriaRepository {
   if (reporteIds.length === 0) return new Map();
   const placeholders = reporteIds.map(() => '?').join(',');
   const [rows] = await this.pool.query<RowDataPacket[]>(
-    `SELECT reporte_id, categoria_id FROM reporte_categoria WHERE reporte_id IN (${placeholders})`,
+    `SELECT rc.reporte_id, c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id IN (${placeholders})`,
     reporteIds,
   );
   const mapa = new Map<string, string[]>();
   for (const row of rows) {
     const lista = mapa.get(row.reporte_id) ?? [];
-    lista.push(row.categoria_id);
+    lista.push(row.nombre);
     mapa.set(row.reporte_id, lista);
   }
   return mapa;
