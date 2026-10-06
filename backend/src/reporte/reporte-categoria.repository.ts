@@ -28,10 +28,10 @@ export class ReporteCategoriaRepository {
   }
   async findCategorias(reporteId: string): Promise<string[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT categoria_id FROM reporte_categoria WHERE reporte_id = ?`,
+      `SELECT c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id = ?`,
       [reporteId],
     );
-    return rows.map((r) => r.categoria_id);
+    return rows.map((r) => r.nombre);
   }
   async listarPorReportes(reporteIds: string[]): Promise<Map<string, string[]>> {
   if (reporteIds.length === 0) return new Map();
