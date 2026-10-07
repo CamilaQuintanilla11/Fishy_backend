@@ -39,8 +39,8 @@ export class ReporteController{
   }
 
   @Get()
-  findAll(@CurrentUser() user: JwtPayload):Promise<ReporteResponseDto[]>{
-    return this.service.findAll(user.rolNombre);
+  findAll(@CurrentUser() user: JwtPayload): Promise<ReporteResponseDto[]> {
+    return this.service.findAll(user.sub, user.rolNombre);
   }
 
   @Get('pendientes')
@@ -61,12 +61,23 @@ export class ReporteController{
     return this.service.update(user.sub, id,dto);
   }
 
-
   @Patch(':id/moderar')
   @UseGuards(RolesGuard)
   @Roles('admin')
   moderar(@Param('id') id:string, @Body() dto: ModerarReporteDto): Promise<ReporteResponseDto> {
     return this.service.moderar(id,dto);
+  }
+
+    @Post(':id/like')
+  @HttpCode(200)
+  darLike(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.service.darLike(user.sub, id);
+  }
+ 
+  @Delete(':id/like')
+  @HttpCode(200)
+  quitarLike(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.service.quitarLike(user.sub, id);
   }
 
   @Delete(':id')

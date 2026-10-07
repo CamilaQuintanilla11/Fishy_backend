@@ -9,6 +9,8 @@ import { Reporte } from './entities/reporte.entity';
 import { ModerarReporteDto } from './dto/admin-reporte.dto';
 import { CategoriaRepository } from '../categoria/categoria.repository';
 import { ReporteCategoriaRepository } from './reporte-categoria.repository';
+import { ReporteLikeRepository } from './reporte-like.repository';
+import { UsuarioRepository } from '../usuario/usuario.repository';
 import { Inject, forwardRef } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -25,6 +27,8 @@ export class ReporteService {
     private readonly riesgoRepository: RiesgoRepository,
     private readonly categoriaRepository: CategoriaRepository,
     private readonly reporteCategoriaRepository: ReporteCategoriaRepository,
+    private readonly likeRepository: ReporteLikeRepository,
+    private readonly usuarioRepository: UsuarioRepository,
     @Inject(forwardRef(() => EvidenciaRepository))
     private readonly evidenciaRepository: EvidenciaRepository,
   ) {}
@@ -59,40 +63,23 @@ export class ReporteService {
   }
 
 
-async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
-  let reportes: Reporte[];
+  async findAll(userID: string, rolNombre: string): Promise<ReporteResponseDto[]> {
+    let reportes: Reporte[];
 
-  if (rolNombre === 'admin') {
-    reportes = await this.repository.findAll();
-  } else {
-    const aprobado = await this.estadoRepository.findByNombre('aprobado');
-
-    if (!aprobado) {
-      throw new Error('No existe el estado "aprobado"');
+    if (rolNombre === 'admin') {
+      reportes = await this.repository.findAll();
+    } else {
+      const aprobado = await this.estadoRepository.findByNombre('aprobado');
+      if (!aprobado) {
+        throw new Error('No existe el estado "aprobado"');
+      }
+      reportes = await this.repository.findAllByEstado(aprobado.id);
     }
 
-    reportes = await this.repository.findAllByEstado(aprobado.id);
+    return Promise.all(
+      reportes.map((reporte) => this.completarDto(reporte, rolNombre === 'admin', userID)),
+    );
   }
-
-  return Promise.all(
-    reportes.map(async (reporte) => {
-      const dto = ReporteResponseDto.fromEntity(reporte, {
-        incluirDueno: rolNombre === 'admin',
-      });
-
-      dto.categorias =
-        await this.reporteCategoriaRepository.findCategorias(reporte.id);
-
-      const evidencias =
-        await this.evidenciaRepository.findByReporteId(reporte.id);
-
-      dto.evidencias =
-        evidencias.map(EvidenciaResponseDto.fromEntity);
-
-      return dto;
-    }),
-  );
-}
 
   async findOne(userID: string, rolNombre: string, id: string): Promise<ReporteResponseDto> {
     const reporte = await this.obtenerReporte(id);
@@ -107,11 +94,7 @@ async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
         throw new ForbiddenException('No puedes ver un reporte que no es tuyo y que no está aprobado');
       }
     }
-    const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno: esAdmin, });
-    dto.categorias = await this.reporteCategoriaRepository.findCategorias(id);
-    const evidencias = await this.evidenciaRepository.findByReporteId(id);
-    dto.evidencias = evidencias.map(EvidenciaResponseDto.fromEntity);
-    return dto;
+    return this.completarDto(reporte, esAdmin, userID);
   }
 
   async update(userID: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
@@ -153,13 +136,7 @@ async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
     }
     const reportes = await this.repository.findAllByEstado(pendiente.id);
 
-    const respuestas = await Promise.all(reportes.map(async (r) => {
-      const dto = ReporteResponseDto.fromEntity(r, { incluirDueno: true });
-      dto.categorias = await this.reporteCategoriaRepository.findCategorias(r.id);
-      return dto;
-    }));
-
-    return respuestas;
+    return Promise.all(reportes.map((r) => this.completarDto(r, true)));
   }
 
 
@@ -181,6 +158,45 @@ async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
 
     const updated = (await this.repository.update(id, cambios))!;
     return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
+  }
+
+  async darLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
+    await this.obtenerReporte(id); 
+    await this.likeRepository.agregar(userID, id);
+    return {
+      mePasoIgualCount: await this.likeRepository.contar(id),
+      yaDiLike: true,
+    };
+  }
+ 
+  async quitarLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
+    await this.obtenerReporte(id);
+    await this.likeRepository.eliminar(userID, id);
+    return {
+      mePasoIgualCount: await this.likeRepository.contar(id),
+      yaDiLike: false,
+    };
+  }
+ 
+  private async completarDto(
+    reporte: Reporte,
+    incluirDueno: boolean,
+    userID?: string,
+  ): Promise<ReporteResponseDto> {
+    const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno });
+ 
+    dto.categorias = await this.reporteCategoriaRepository.findCategorias(reporte.id);
+ 
+    const evidencias = await this.evidenciaRepository.findByReporteId(reporte.id);
+    dto.evidencias = evidencias.map((e) => EvidenciaResponseDto.fromEntity(e));
+ 
+    const autor = await this.usuarioRepository.findById(reporte.perteneceA);
+    dto.autor = autor?.nombre ?? 'Anónimo';
+ 
+    dto.mePasoIgualCount = await this.likeRepository.contar(reporte.id);
+    dto.yaDiLike = userID ? await this.likeRepository.existe(userID, reporte.id) : false;
+ 
+    return dto;
   }
 
   private checkReporte(data: any): boolean {
