@@ -9,6 +9,8 @@ import { Reporte } from './entities/reporte.entity';
 import { ModerarReporteDto } from './dto/admin-reporte.dto';
 import { CategoriaRepository } from '../categoria/categoria.repository';
 import { ReporteCategoriaRepository } from './reporte-categoria.repository';
+import { ReporteLikeRepository } from './reporte-like.repository';
+import { UsuarioRepository } from '../usuario/usuario.repository';
 import { Inject, forwardRef } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -25,6 +27,8 @@ export class ReporteService {
     private readonly riesgoRepository: RiesgoRepository,
     private readonly categoriaRepository: CategoriaRepository,
     private readonly reporteCategoriaRepository: ReporteCategoriaRepository,
+    private readonly likeRepository: ReporteLikeRepository,
+    private readonly usuarioRepository: UsuarioRepository,
     @Inject(forwardRef(() => EvidenciaRepository))
     private readonly evidenciaRepository: EvidenciaRepository,
   ) {}
@@ -181,6 +185,45 @@ async findAll(rolNombre: string): Promise<ReporteResponseDto[]> {
 
     const updated = (await this.repository.update(id, cambios))!;
     return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
+  }
+
+  async darLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
+    await this.obtenerReporte(id); 
+    await this.likeRepository.agregar(userID, id);
+    return {
+      mePasoIgualCount: await this.likeRepository.contar(id),
+      yaDiLike: true,
+    };
+  }
+ 
+  async quitarLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
+    await this.obtenerReporte(id);
+    await this.likeRepository.eliminar(userID, id);
+    return {
+      mePasoIgualCount: await this.likeRepository.contar(id),
+      yaDiLike: false,
+    };
+  }
+ 
+  private async completarDto(
+    reporte: Reporte,
+    incluirDueno: boolean,
+    userID?: string,
+  ): Promise<ReporteResponseDto> {
+    const dto = ReporteResponseDto.fromEntity(reporte, { incluirDueno });
+ 
+    dto.categorias = await this.reporteCategoriaRepository.findCategorias(reporte.id);
+ 
+    const evidencias = await this.evidenciaRepository.findByReporteId(reporte.id);
+    dto.evidencias = evidencias.map((e) => EvidenciaResponseDto.fromEntity(e));
+ 
+    const autor = await this.usuarioRepository.findById(reporte.perteneceA);
+    dto.autor = autor?.nombre ?? 'Anónimo';
+ 
+    dto.mePasoIgualCount = await this.likeRepository.contar(reporte.id);
+    dto.yaDiLike = userID ? await this.likeRepository.existe(userID, reporte.id) : false;
+ 
+    return dto;
   }
 
   private checkReporte(data: any): boolean {
