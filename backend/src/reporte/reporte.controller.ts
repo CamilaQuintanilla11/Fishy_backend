@@ -69,6 +69,18 @@ export class ReporteController{
     return this.service.moderar(id,dto);
   }
 
+    @Post(':id/like')
+  @HttpCode(200)
+  darLike(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.service.darLike(user.sub, id);
+  }
+ 
+  @Delete(':id/like')
+  @HttpCode(200)
+  quitarLike(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.service.quitarLike(user.sub, id);
+  }
+  
   @Delete(':id')
   @HttpCode(204)
   remove(@CurrentUser() user: JwtPayload, @Param('id') id: string):Promise<void> {
