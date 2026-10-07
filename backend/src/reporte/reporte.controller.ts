@@ -39,8 +39,8 @@ export class ReporteController{
   }
 
   @Get()
-  findAll(@CurrentUser() user: JwtPayload):Promise<ReporteResponseDto[]>{
-    return this.service.findAll(user.rolNombre);
+  findAll(@CurrentUser() user: JwtPayload): Promise<ReporteResponseDto[]> {
+    return this.service.findAll(user.sub, user.rolNombre);
   }
 
   @Get('pendientes')
