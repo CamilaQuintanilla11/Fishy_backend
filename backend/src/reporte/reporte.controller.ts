@@ -61,7 +61,6 @@ export class ReporteController{
     return this.service.update(user.sub, id,dto);
   }
 
-
   @Patch(':id/moderar')
   @UseGuards(RolesGuard)
   @Roles('admin')
@@ -80,7 +79,7 @@ export class ReporteController{
   quitarLike(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.service.quitarLike(user.sub, id);
   }
-  
+
   @Delete(':id')
   @HttpCode(204)
   remove(@CurrentUser() user: JwtPayload, @Param('id') id: string):Promise<void> {
