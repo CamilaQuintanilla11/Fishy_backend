@@ -7,6 +7,6 @@ export class CreateReporteDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  @IsUUID('4', { each: true})
+  @IsUUID('all', { each: true})
   categorias: string[];
 }
