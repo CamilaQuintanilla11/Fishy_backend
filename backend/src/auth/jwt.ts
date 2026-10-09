@@ -1,3 +1,10 @@
+/**
+ * JWT firmado con HMAC-SHA256 (`HS256`), construido a mano con `node:crypto`.
+ *
+ * Formato: `base64url(header).base64url(payload).base64url(firma)`.
+ * Sin estado: el servidor no guarda tokens; los verifica recalculando la
+ * firma con la misma llave. Quien no tenga la llave no puede firmar.
+ */
 import { createHmac } from "crypto";
 
 const SECRET = 'fishy-secret-2026';
@@ -6,13 +13,22 @@ function getSecret(): string {
     return SECRET;
 }
 
+/** Lo que viaja dentro del token. `sub` es el id del usuario. */
 export interface JwtPayload {
     sub: string;
     correo: string;
+    /** Id del rol en la tabla `rol`; `RolesGuard` lo vuelve a buscar en la BD. */
     tieneRol: string;
+    /**
+     * Nombre del rol (`admin` o `usuario`) al momento del login. Si el rol cambia
+     * en la BD, el token viejo sigue diciendo el anterior hasta que expira.
+     */
     rolNombre: string;
+    /** Un access token no sirve para refrescar, ni un refresh para pedir recursos. */
     type: 'access' | 'refresh';
+    /** Emitido en (segundos Unix). */
     iat: number;
+    /** Expira en (segundos Unix). */
     exp: number;
 }
 
@@ -28,6 +44,12 @@ function hmac(data: string): string {
     return createHmac('sha256',getSecret()).update(data).digest('base64url');
 }
 
+/**
+ * Firma un payload y regresa el token.
+ * @param payload - Claims sin `iat` ni `exp`; se agregan aquí.
+ * @param ttlSeconds - Vida del token en segundos, contada desde ahora.
+ * @returns El JWT como `header.payload.firma`.
+ */
 export function sign(payload: Omit<JwtPayload, 'iat' | 'exp'>, ttlSeconds: number): string {
     const header = b64url({ alg: 'HS256', typ: 'JWT' });
     const body = b64url({...payload, iat: now(), exp: now() + ttlSeconds}); 
@@ -35,6 +57,12 @@ export function sign(payload: Omit<JwtPayload, 'iat' | 'exp'>, ttlSeconds: numbe
     return `${header}.${body}.${signature}`;
 }
 
+/**
+ * Verifica un token y regresa su payload.
+ * @param token - El JWT sin `Bearer ` (del header, o el `refreshToken` del body).
+ * @returns El payload si la firma cuadra y no ha expirado; `null` en
+ *   cualquier otro caso (mal formado, firma distinta, expirado).
+ */
 export function verify(token: string): JwtPayload | null {
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) {

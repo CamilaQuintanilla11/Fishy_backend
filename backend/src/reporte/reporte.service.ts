@@ -17,8 +17,22 @@ import { join } from 'node:path';
 import { EvidenciaRepository } from '../evidencia/evidencia.repository';
 import { EvidenciaResponseDto } from 'src/evidencia/dto/evidencia-response.dto';
 
+/** Todo reporte nace en este estado y espera a que un admin lo modere. */
 const ESTADO_INICIAL = 'pendiente';
 
+/**
+ * Reglas de negocio de los reportes de fraude.
+ *
+ * No sabe de HTTP ni de SQL: recibe DTOs ya validados, habla con los
+ * repositories y regresa `ReporteResponseDto`. Los errores de negocio se
+ * expresan como excepciones de Nest para que el controller no tenga que
+ * traducirlas.
+ *
+ * Ciclo de vida: un reporte nace `pendiente`; mientras lo está, solo su dueño
+ * puede editarlo o borrarlo. Un admin lo modera (`aprobado` o `rechazado`) y
+ * desde ahí queda congelado. En las listas, un usuario normal solo ve reportes
+ * `aprobado`; sus propios pendientes solo los ve pidiéndolos por id.
+ */
 @Injectable()
 export class ReporteService {
   constructor(
@@ -33,6 +47,15 @@ export class ReporteService {
     private readonly evidenciaRepository: EvidenciaRepository,
   ) {}
 
+  /**
+   * Crea un reporte en estado `pendiente` a nombre de quien lo pide.
+   * @param userID - `sub` del token; queda como dueño (`perteneceA`).
+   * @param dto - Título e ids de categorías, ya validados por el `ValidationPipe`.
+   * @returns El reporte guardado, sin `perteneceA`. Aquí `categorias` trae los
+   *   ids que se mandaron; en las lecturas trae nombres.
+   * @throws NotFoundException si alguna categoría no existe.
+   * @throws Error si en la BD falta el estado `pendiente` (corre `db/seed.sql`).
+   */
   async create(userID: string, dto: CreateReporteDto): Promise<ReporteResponseDto> {
     try {
       this.checkReporte(dto);
@@ -63,6 +86,13 @@ export class ReporteService {
   }
 
 
+  /**
+   * Lista reportes según el rol de quien pregunta.
+   * @param userID - `sub` del token; se usa para calcular `yaDiLike`.
+   * @param rolNombre - `rolNombre` del token.
+   * @returns Admin: todos, más recientes primero y con `perteneceA`.
+   *   Cualquier otro rol: solo los `aprobado`, más viejos primero y sin `perteneceA`.
+   */
   async findAll(userID: string, rolNombre: string): Promise<ReporteResponseDto[]> {
     let reportes: Reporte[];
 
@@ -81,6 +111,15 @@ export class ReporteService {
     );
   }
 
+  /**
+   * Busca un reporte por id. Admin y dueño lo ven en cualquier estado; los
+   * demás, solo si está `aprobado`.
+   * @param userID - `sub` del token.
+   * @param rolNombre - `rolNombre` del token.
+   * @param id - UUID del reporte.
+   * @throws NotFoundException si no hay reporte con ese id.
+   * @throws ForbiddenException si no es tuyo y no está aprobado.
+   */
   async findOne(userID: string, rolNombre: string, id: string): Promise<ReporteResponseDto> {
     const reporte = await this.obtenerReporte(id);
     const esAdmin = rolNombre === 'admin';
@@ -97,6 +136,19 @@ export class ReporteService {
     return this.completarDto(reporte, esAdmin, userID);
   }
 
+  /**
+   * Edita título y/o categorías de un reporte propio que siga `pendiente`.
+   * Si vienen `categorias`, reemplazan a todas las anteriores; lo que no venga
+   * se conserva.
+   * @param userID - `sub` del token; debe ser el dueño.
+   * @param id - UUID del reporte.
+   * @param changes - `titulo` y/o `categorias` (ids).
+   * @returns El reporte actualizado, sin `perteneceA`. `categorias` trae los ids
+   *   si se mandaron; si no, los nombres actuales.
+   * @throws NotFoundException si no existe el reporte o alguna categoría.
+   * @throws ForbiddenException si el reporte no es tuyo.
+   * @throws BadRequestException si el reporte ya fue moderado.
+   */
   async update(userID: string, id: string, changes: UpdateReporteDto): Promise<ReporteResponseDto> {
     await this.obtenerReportePropio(userID, id);
     if (changes.categorias) {
@@ -122,13 +174,28 @@ export class ReporteService {
     return response;
   }
 
+  /**
+   * Borra un reporte propio que siga `pendiente`. Es definitivo: no hay papelera.
+   * La BD borra en cascada sus evidencias, likes y categorías; aquí además se
+   * borran del disco (`uploads/`) las fotos de sus evidencias.
+   * @param userID - `sub` del token; debe ser el dueño.
+   * @param id - UUID del reporte.
+   * @throws NotFoundException si no hay reporte con ese id.
+   * @throws ForbiddenException si el reporte no es tuyo.
+   * @throws BadRequestException si el reporte ya fue moderado.
+   */
   async remove(userID: string, id: string): Promise<void> {
     await this.obtenerReportePropio(userID, id);
+    // Se leen antes de borrar: la cascada se lleva las filas y ya no sabríamos qué fotos quitar del disco.
     const evidencias = await this.evidenciaRepository.findByReporteId(id);
     await this.repository.delete(id);
     await Promise.all(evidencias.filter((e) => e.foto).map((e) => unlink(join('uploads', e.foto)).catch(() => undefined)));
   }
 
+  /**
+   * Cola de moderación: reportes en `pendiente`, más viejos primero y con
+   * `perteneceA`. El controller la protege con `@Roles('admin')`.
+   */
   async listarPendientes(): Promise<ReporteResponseDto[]> {
     const pendiente = await this.estadoRepository.findByNombre(ESTADO_INICIAL);
     if (!pendiente) {
@@ -140,6 +207,18 @@ export class ReporteService {
   }
 
 
+  /**
+   * Modera un reporte `pendiente`: le pone el estado que mande el admin
+   * (normalmente `aprobado` o `rechazado`). Si es `aprobado`, guarda `fecha_aprob`.
+   *
+   * Ojo: `dto.tieneRiesgo` se valida en el DTO, pero hoy **no se guarda**.
+   * @param id - UUID del reporte.
+   * @param dto - Ids del nuevo estado y del nivel de riesgo.
+   * @returns El reporte actualizado, con `perteneceA`; `categorias`,
+   *   `evidencias` y likes vienen vacíos.
+   * @throws NotFoundException si no existe el reporte o el estado.
+   * @throws BadRequestException si el reporte ya fue moderado.
+   */
   async moderar(id: string, dto: ModerarReporteDto): Promise<ReporteResponseDto> {
     const reporte = await this.obtenerReporte(id);
 
@@ -160,6 +239,14 @@ export class ReporteService {
     return ReporteResponseDto.fromEntity(updated, { incluirDueno: true });
   }
 
+  /**
+   * Marca "me pasó igual" de un usuario en un reporte. Dar like dos veces
+   * cuenta como uno: la tabla `reporte_like` tiene llave primaria usuario + reporte.
+   * @param userID - `sub` del token.
+   * @param id - UUID del reporte.
+   * @returns El total de likes del reporte y `yaDiLike: true`.
+   * @throws NotFoundException si no hay reporte con ese id.
+   */
   async darLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
     await this.obtenerReporte(id); 
     await this.likeRepository.agregar(userID, id);
@@ -169,6 +256,13 @@ export class ReporteService {
     };
   }
  
+  /**
+   * Quita el "me pasó igual". Si el usuario no había dado like, no pasa nada.
+   * @param userID - `sub` del token.
+   * @param id - UUID del reporte.
+   * @returns El total de likes del reporte y `yaDiLike: false`.
+   * @throws NotFoundException si no hay reporte con ese id.
+   */
   async quitarLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
     await this.obtenerReporte(id);
     await this.likeRepository.eliminar(userID, id);
@@ -178,6 +272,12 @@ export class ReporteService {
     };
   }
  
+  /**
+   * Arma el DTO completo de lectura: categorías (por nombre), evidencias,
+   * nombre del autor, total de likes y si `userID` ya dio like.
+   * @param incluirDueno - Solo los admins reciben `perteneceA`.
+   * @param userID - Sin él, `yaDiLike` siempre es `false`.
+   */
   private async completarDto(
     reporte: Reporte,
     incluirDueno: boolean,
@@ -219,6 +319,7 @@ export class ReporteService {
     }
   }
 
+  /** @throws NotFoundException si no hay reporte con ese id. */
   private async obtenerReporte(id: string): Promise<Reporte> {
     const reporte = await this.repository.findById(id);
     if (!reporte) {
@@ -227,6 +328,13 @@ export class ReporteService {
     return reporte;
   }
 
+  /**
+   * Regla de edición: solo el dueño, y solo mientras el reporte sigue
+   * `pendiente`; ya moderado queda congelado.
+   * @throws NotFoundException si no hay reporte con ese id.
+   * @throws ForbiddenException si el reporte no es de `userID`.
+   * @throws BadRequestException si ya fue moderado.
+   */
   private async obtenerReportePropio(userID: string, id: string): Promise<Reporte> {
     const reporte = await this.obtenerReporte(id);
     if (reporte.perteneceA !== userID) {

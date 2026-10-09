@@ -13,13 +13,17 @@ async function bootstrap() {
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads'});
 
+  // Documentación OpenAPI. Se genera a partir de los decoradores de los
+  // controllers y DTOs: Swagger UI en /docs, el documento crudo en /docs-json.
   const config = new DocumentBuilder()
     .setTitle('Proyecto Fishy')
     .setDescription(
-      'API REST del Proyecto 0 Fraude Fishy. Todo /usuario requiere un access token')
+      'API REST de Fishy: reportes de fraudes y estafas digitales. ' +
+        'Todo, salvo /auth/register, /auth/login y /auth/refresh, requiere un ' +
+        'access token: obténlo en POST /auth/login y pégalo en el botón Authorize.',
+    )
     .setVersion('1.0')
     .addBearerAuth()
-    
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

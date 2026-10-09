@@ -38,27 +38,46 @@ const limitSize = 5 * 1024 * 1024;
 
 @ApiTags('evidencias')
 @ApiBearerAuth()
+@ApiResponse({
+  status: 401,
+  description: 'Falta el token, es inválido o expiró',
+})
 @UseGuards(AuthGuard)
 @Controller('evidencias')
 export class EvidenciaController {
   constructor(private readonly service: EvidenciaService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Agregar una evidencia a un reporte propio' })
+  @ApiResponse({ status: 201, type: EvidenciaResponseDto })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  @ApiResponse({ status: 403, description: 'El reporte no es tuyo' })
+  @ApiResponse({ status: 404, description: 'No existe el reporte' })
   crear(@CurrentUser() user: JwtPayload, @Body() dto: CreateEvidenciaDto): Promise<EvidenciaResponseDto> {
     return this.service.crear(user.sub, dto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar evidencias (admin: todas; usuario: solo de reportes aprobados)' })
+  @ApiResponse({ status: 200, type: [EvidenciaResponseDto] })
   listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
     return this.service.listar(user.rolNombre);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ver una evidencia' })
+  @ApiResponse({ status: 200, type: EvidenciaResponseDto })
+  @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
   obtener(@Param('id') id: string): Promise<EvidenciaResponseDto> {
     return this.service.obtener(id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Editar url o descripción de una evidencia propia' })
+  @ApiResponse({ status: 200, type: EvidenciaResponseDto })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  @ApiResponse({ status: 403, description: 'La evidencia es de un reporte de otro usuario' })
+  @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
   actualizar(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -86,8 +105,7 @@ export class EvidenciaController {
     },
   })
   @ApiResponse({ status: 201, type: EvidenciaResponseDto })
-  @ApiResponse({ status: 400, description: 'No vino archivo, o no es una imagen valida' })
-  @ApiResponse({ status: 403, description: 'La evidencia es de un reporte de otro usuario' })
+  @ApiResponse({ status: 400, description: 'No vino el campo photo' })
   @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
   async uploadPhoto(
     @CurrentUser() user: JwtPayload,
@@ -105,6 +123,10 @@ export class EvidenciaController {
 
   @Delete(':id')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Borrar una evidencia propia (y su foto)' })
+  @ApiResponse({ status: 204, description: 'Borrada; sin cuerpo' })
+  @ApiResponse({ status: 403, description: 'La evidencia es de un reporte de otro usuario' })
+  @ApiResponse({ status: 404, description: 'No existe una evidencia con ese id' })
   eliminar(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
     return this.service.eliminar(user.sub, id);
   }
