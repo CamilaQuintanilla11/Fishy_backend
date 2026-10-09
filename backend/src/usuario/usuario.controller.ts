@@ -31,6 +31,11 @@ export class UsuarioController {
         return this.usuarioService.listar();
     }
 
+        @Get('me')
+    perfil(@CurrentUser() user: JwtPayload) {
+        return this.usuarioService.obtener(user.sub);
+    }
+    
     @Get(':id')
     @ApiOperation({ summary: 'Ver un usuario (el tuyo; admin: cualquiera)' })
     @ApiResponse({ status: 200, type: UsuarioResponseDto })
