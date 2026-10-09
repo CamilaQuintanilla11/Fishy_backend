@@ -20,6 +20,11 @@ export class UsuarioController {
         return this.usuarioService.listar();
     }
 
+        @Get('me')
+    perfil(@CurrentUser() user: JwtPayload) {
+        return this.usuarioService.obtener(user.sub);
+    }
+    
     @Get(':id')
     obtener(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
         verificarPropio(user, id);
