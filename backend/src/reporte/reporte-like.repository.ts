@@ -9,13 +9,14 @@ export class ReporteLikeRepository {
   async agregar(usuarioId: string, reporteId: string): Promise<void> {
     await this.pool.query(
       `INSERT IGNORE INTO reporte_like
-        (usuario_id, reporte_id) VALUES ('${usuarioId}', '${reporteId}')`,
+        (usuario_id, reporte_id) VALUES (?, ?)`,
+      [usuarioId, reporteId]
     );
   }
 
   async eliminar(usuarioId: string, reporteId: string): Promise<void> {
     await this.pool.query(
-      `DELETE FROM reporte_like WHERE usuario_id = '${usuarioId}' AND reporte_id = '${reporteId}'`,
+      `DELETE FROM reporte_like WHERE usuario_id = ? AND reporte_id = ?`, [usuarioId, reporteId]
     );
   }
 

@@ -9,7 +9,8 @@ export class ReporteCategoriaRepository {
   async agregar(reporteId: string, categoriaId: string): Promise<void> {
     await this.pool.query(
       `INSERT INTO reporte_categoria
-        (reporte_id, categoria_id) VALUES ('${reporteId}', '${categoriaId}')`,
+        (reporte_id, categoria_id) VALUES (?, ?)`,
+      [reporteId, categoriaId]
     );
   }
 
@@ -26,7 +27,7 @@ export class ReporteCategoriaRepository {
   }
   async findCategorias(reporteId: string): Promise<string[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id = '${reporteId}'`,
+      `SELECT c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id = ?`, [reporteId]
     );
     return rows.map((r) => r.nombre); 
   }
@@ -34,7 +35,7 @@ export class ReporteCategoriaRepository {
   if (reporteIds.length === 0) return new Map();
   const valores = reporteIds.map((id) => `'${id}'`).join(',');
   const [rows] = await this.pool.query<RowDataPacket[]>(
-    `SELECT rc.reporte_id, c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id IN (${valores})`,
+    `SELECT rc.reporte_id, c.nombre FROM reporte_categoria rc JOIN categoria c ON rc.categoria_id = c.id WHERE rc.reporte_id IN (?)`, [valores]
   );
   const mapa = new Map<string, string[]>();
   for (const row of rows) {

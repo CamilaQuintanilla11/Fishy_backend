@@ -59,7 +59,7 @@ export class ReporteRepository {
     const values = entries.map(([, value]) => value);
 
     await this.pool.query(
-      `UPDATE reporte SET ${sets} WHERE id = '${id}'`,
+      `UPDATE reporte SET ${sets} WHERE id = ?`,
       [...values, id],
     );
     return this.findById(id);
