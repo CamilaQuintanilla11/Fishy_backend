@@ -28,14 +28,16 @@ export class ReporteRepository {
 
   async findAllByEstado(estadoID: string): Promise<Reporte[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE tieneEstado = '${estadoID}' ORDER BY fecha_pub`,
+      `SELECT ${COLUMNS} FROM reporte WHERE tieneEstado = ? ORDER BY fecha_pub`,
+      [estadoID]
     );
     return rows.map(toEntity);
   }
 
   async findById(id: string): Promise<Reporte | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE id = '${id}'`,
+      `SELECT ${COLUMNS} FROM reporte WHERE id = ?`,
+      [id]
     );
     return rows[0] && toEntity(rows[0]);
   }
@@ -43,8 +45,8 @@ export class ReporteRepository {
   async save (data:{titulo: string; perteneceA: string; tieneEstado: string;}): Promise<Reporte> {
     const id = randomUUID();
     await this.pool.query(
-      `INSERT INTO reporte (id, titulo, perteneceA, tieneEstado) VALUES ('${id}', '${data.titulo}', '${data.perteneceA}', '${data.tieneEstado}')`,
-
+      `INSERT INTO reporte (id, titulo, perteneceA, tieneEstado) VALUES (?, ?, ?, ?)`,
+      [id, data.titulo, data.perteneceA, data.tieneEstado]
     );
     return (await this.findById(id))!;
   }

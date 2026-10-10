@@ -25,14 +25,15 @@ export class UsuarioRepository {
     }
     async findByCorreo(correo: string): Promise<Usuario | undefined>{
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM usuario WHERE correo = '${correo}'`
+            `SELECT ${COLUMNS} FROM usuario WHERE correo = ?`, [correo]
         );
         return rows[0] && toEntity(rows[0]);
     }
     async save(usuario: Omit<Usuario, 'id' | 'fecha_creado'>): Promise<Usuario> {
         const id = randomUUID();
         await this.pool.query(
-            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES ('${id}', '${usuario.nombre}', '${usuario.correo}', '${usuario.contrasenaHash}', '${usuario.tieneRol}')`
+            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES (?, ?, ?, ?, ?)`,
+            [id, usuario.nombre, usuario.correo, usuario.contrasenaHash, usuario.tieneRol]
         );
         return (await this.findById(id))!;
     }
@@ -50,7 +51,7 @@ export class UsuarioRepository {
 
     async delete(id: string): Promise<boolean> {
         const [result] = await this.pool.query<ResultSetHeader> (
-            `DELETE FROM usuario WHERE id = '${id}'`,
+            `DELETE FROM usuario WHERE id = ?`,
             [id],
         );
         return result.affectedRows > 0;

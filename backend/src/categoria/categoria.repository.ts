@@ -19,14 +19,14 @@ export class CategoriaRepository {
 
     async findById(id: string): Promise<Categoria | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM categoria WHERE id = '${id}'`,
+            `SELECT ${COLUMNS} FROM categoria WHERE id = ?`, [id]
         );
         return rows[0] && toEntity(rows[0]);
     }
     
     async findByNombre(nombre: string): Promise<Categoria | undefined> {
         const [rows] = await this.pool.query<RowDataPacket[]>(
-            `SELECT ${COLUMNS} FROM categoria WHERE nombre = '${nombre}'`,
+            `SELECT ${COLUMNS} FROM categoria WHERE nombre = ?`, [nombre]
         );
         return rows[0] && toEntity(rows[0]);
     }
@@ -34,7 +34,8 @@ export class CategoriaRepository {
     async save(categoria: Omit<Categoria, 'id'>): Promise<Categoria> {
         const id = randomUUID();
         await this.pool.query(
-           `INSERT INTO categoria (id, nombre) VALUES ('${id}', '${categoria.nombre}')`,
+           `INSERT INTO categoria (id, nombre) VALUES (?, ?)`,
+           [id, categoria.nombre]
         );
         return (await this.findById(id))!;
     }
@@ -47,13 +48,13 @@ export class CategoriaRepository {
         const sets = entries.map(([column]) => `${column} = ?`).join(', ');
         const values = entries.map(([, value]) => value);
 
-        await this.pool.query(`UPDATE categoria SET ${sets} WHERE id = '${id}'`, [...values, id]);
+        await this.pool.query(`UPDATE categoria SET ${sets} WHERE id = ?`, [...values, id]);
         return this.findById(id);
     }
 
     async delete(id: string): Promise<boolean> {
         const [result] = await this.pool.query<ResultSetHeader>(
-            `DELETE FROM categoria WHERE id = '${id}'`,
+            `DELETE FROM categoria WHERE id = ?`, [id]
         );
         return result.affectedRows > 0;
     }

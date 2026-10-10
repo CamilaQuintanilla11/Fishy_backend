@@ -21,21 +21,21 @@ export class ReporteLikeRepository {
 
   async contar(reporteId: string): Promise<number> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) AS total FROM reporte_like WHERE reporte_id = '${reporteId}'`,
+      `SELECT COUNT(*) AS total FROM reporte_like WHERE reporte_id = ?`, [reporteId]
     );
     return Number(rows[0]?.total ?? 0);
   }
 
   async existe(usuarioId: string, reporteId: string): Promise<boolean> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT 1 FROM reporte_like WHERE usuario_id = '${usuarioId}' AND reporte_id = '${reporteId}' LIMIT 1`,
+      `SELECT 1 FROM reporte_like WHERE usuario_id = ? AND reporte_id = ? LIMIT 1`, [usuarioId, reporteId]
     );
     return rows.length > 0;
   }
 
   async contarPorUsuario(usuarioId: string): Promise<number> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) AS total FROM reporte_like WHERE usuario_id = '${usuarioId}'`,
+      `SELECT COUNT(*) AS total FROM reporte_like WHERE usuario_id = ?`, [usuarioId]
     );
     return Number(rows[0]?.total ?? 0);
   }
