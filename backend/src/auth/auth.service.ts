@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { sign, verify } from './jwt';
+import { createHash } from 'node:crypto';
 
 const ACCESS_TTL = 15 * 60;
 const REFRESH_TTL = 7 * 24 * 60 * 60;
@@ -80,4 +81,8 @@ export class AuthService {
     );
     return { accessToken };
   }
+}
+
+  function hash(contrasena: string): string {
+    return createHash('sha256').update(contrasena).digest('hex');
 }
