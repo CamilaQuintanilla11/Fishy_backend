@@ -32,7 +32,7 @@ export class EvidenciaRepository {
 
   async findById(id: string): Promise<Evidencia | undefined> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM evidencia WHERE id = '${id}'`,
+      `SELECT ${COLUMNS} FROM evidencia WHERE id = ?`, [id]
     );
     return rows[0] && toEntity(rows[0]);
   }

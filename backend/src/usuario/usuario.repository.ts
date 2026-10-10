@@ -45,7 +45,7 @@ export class UsuarioRepository {
         const sets = entries.map(([column]) => `${column} = ?`).join(', ');
         const values = entries.map(([, value]) => value);
 
-        await this.pool.query(`UPDATE usuario SET ${sets} WHERE id = '${id}'`, [...values]);
+        await this.pool.query(`UPDATE usuario SET ${sets} WHERE id = ?`, [...values, id]);
         return this.findById(id);
     }
 
