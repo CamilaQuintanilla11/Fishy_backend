@@ -229,8 +229,9 @@ export class ReporteService {
 
     const nuevoEstado = await this.estadoRepository.findById(dto.tieneEstado);
     if (!nuevoEstado) throw new NotFoundException('El estado no existe.');
+    await this.validarRiesgo(dto.tieneRiesgo);
 
-    const cambios: Partial<Reporte> = { tieneEstado: dto.tieneEstado };
+    const cambios: Partial<Reporte> = { tieneEstado: dto.tieneEstado, tieneRiesgo: dto.tieneRiesgo };
     if (nuevoEstado.nombre === 'aprobado') {
       cambios.fecha_aprob = new Date(); 
     }
