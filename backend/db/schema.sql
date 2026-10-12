@@ -86,13 +86,13 @@ CREATE TABLE IF NOT EXISTS lecturas (
     contenido TEXT NOT NULL,
     orden INT NOT NULL UNIQUE
 );
-CREATE TABLE IF NOT EXISTS progreso_leecturas (
+CREATE TABLE IF NOT EXISTS progreso_lecturas (
     usuario_id CHAR(36) NOT NULL,
     lectura_id CHAR(36) NOT NULL,
     completada BOOLEAN NOT NULL DEFAULT FALSE,
-    fecha_completado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_completado TIMESTAMP NULL,
 
     PRIMARY KEY (usuario_id, lectura_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
-    FOREIGN KEY (lectura_id) REFERENCES lecturas(id)
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (lectura_id) REFERENCES lecturas(id) ON DELETE CASCADE
 );
