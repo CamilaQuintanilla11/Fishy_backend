@@ -12,6 +12,9 @@ export class ReporteResponseDto {
   @ApiProperty({ type: String, nullable: true, format: 'uuid', example: null, description: 'Id del nivel de riesgo; null si no tiene' })
   tieneRiesgo: string | null;
 
+  @ApiProperty({ type: String, nullable: true, example: 'Alto', description: 'Nombre del nivel de riesgo (Bajo, Medio, Alto); null si no tiene' })
+  riesgo: string | null = null;
+
   @ApiProperty({ example: '2026-10-09T15:00:00.000Z', description: 'ISO 8601' })
   fecha_pub: string;
 

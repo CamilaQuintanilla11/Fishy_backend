@@ -296,7 +296,12 @@ export class ReporteService {
  
     dto.mePasoIgualCount = await this.likeRepository.contar(reporte.id);
     dto.yaDiLike = userID ? await this.likeRepository.existe(userID, reporte.id) : false;
- 
+    
+    if (reporte.tieneRiesgo) {
+      const riesgo = await this.riesgoRepository.findById(reporte.tieneRiesgo);
+      dto.riesgo = riesgo?.nombre ?? null;
+    }
+
     return dto;
   }
 
