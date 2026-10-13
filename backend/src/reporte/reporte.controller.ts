@@ -24,6 +24,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { ModerarReporteDto } from './dto/admin-reporte.dto';
+import { MisReportesResponseDto } from './dto/mis-reportes-response.dto';
 
 @ApiTags('reportes')
 @ApiBearerAuth()
@@ -62,6 +63,13 @@ export class ReporteController{
   @ApiResponse({ status: 403, description: 'Requiere rol admin' })
   listarPendientes(): Promise<ReporteResponseDto[]> {
     return this.service.listarPendientes()
+  }
+  
+  @Get('mios')
+  @ApiOperation({ summary: 'Mis reportes (todos los estados) y mis estadísticas' })
+  @ApiResponse({ status: 200, type: MisReportesResponseDto })
+  listarMios(@CurrentUser() user: JwtPayload): Promise<MisReportesResponseDto> {
+    return this.service.listarMios(user.sub);
   }
 
   @Get(':id')

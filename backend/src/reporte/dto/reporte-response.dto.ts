@@ -30,6 +30,9 @@ export class ReporteResponseDto {
   @ApiProperty({ format: 'uuid', example: '3f1c2e7a-9b4d-4e6f-8a1b-2c3d4e5f6a7b', description: 'Id del estado (GET /estados)' })
   tieneEstado: string;
 
+  @ApiPropertyOptional({ example: 'pendiente', description: 'Nombre del estado (solo viene en GET /reportes/mios)' })
+  estado?: string;
+
   @ApiProperty({ type: [String], example: ['SMS', 'URL'], description: 'Nombres de categorías (al crear o editar: los ids que se mandaron)' })
   categorias: string[] = [];
 
