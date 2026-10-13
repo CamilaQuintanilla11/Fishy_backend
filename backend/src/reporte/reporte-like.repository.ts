@@ -40,4 +40,16 @@ export class ReporteLikeRepository {
     );
     return Number(rows[0]?.total ?? 0);
   }
+
+    async contarPorUsuarioEnOtros(usuarioId: string): Promise<number> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total
+         FROM reporte_like rl
+         JOIN reporte r ON r.id = rl.reporte_id
+        WHERE rl.usuario_id = ? AND r.perteneceA <> ?`,
+      [usuarioId, usuarioId]
+    );
+    return Number(rows[0]?.total ?? 0);
+  }
+  
 }
