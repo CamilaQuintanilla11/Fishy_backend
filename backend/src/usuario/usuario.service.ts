@@ -5,6 +5,7 @@ import { RolRepository } from '../rol/rol.repository';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UsuarioResponseDto } from './dto/usuario-response.dto';
+import { ResultSetHeader } from 'node_modules/mysql2/typings/mysql/lib/protocol/packets/ResultSetHeader';
 
 const ROL_DEFAULT = 'usuario';
 @Injectable()
@@ -56,8 +57,16 @@ export class UsuarioService {
         return new UsuarioResponseDto(actualizado!);
     }
 
-    async eliminar(id:string ): Promise<void> {
-        await this.obtener(id);
-        await this.usuarioRepository.delete(id);
+
+    async eliminar(id: string) {
+        try {
+            const eliminado = await this.usuarioRepository.delete(id);
+            if (!eliminado) throw new NotFoundException('No existe un usuario con ese id');
+        } catch (e: any) {
+            if (e.code === 'ER_ROW_IS_REFERENCED_2') {
+                throw new ConflictException('No se puede eliminar el usuario porque tiene registros asociados.');
+            }
+            throw e;
+        }
     }
 }
