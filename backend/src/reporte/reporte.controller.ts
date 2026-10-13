@@ -64,6 +64,13 @@ export class ReporteController{
   listarPendientes(): Promise<ReporteResponseDto[]> {
     return this.service.listarPendientes()
   }
+  
+  @Get('mios')
+  @ApiOperation({ summary: 'Mis reportes (todos los estados) y mis estadísticas' })
+  @ApiResponse({ status: 200, type: MisReportesResponseDto })
+  listarMios(@CurrentUser() user: JwtPayload): Promise<MisReportesResponseDto> {
+    return this.service.listarMios(user.sub);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Ver un reporte' })
