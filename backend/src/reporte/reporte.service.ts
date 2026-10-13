@@ -274,6 +274,26 @@ export class ReporteService {
     };
   }
  
+    async listarMios(userID: string): Promise<MisReportesResponseDto> {
+    const reportes = await this.repository.findAllByUsuario(userID);
+    const estados = await this.estadoRepository.findAll();
+    const nombreEstado = new Map(estados.map((e) => [e.id, e.nombre]));
+
+    const lista = await Promise.all(
+      reportes.map(async (r) => {
+        const dto = await this.completarDto(r, false, userID);
+        dto.estado = nombreEstado.get(r.tieneEstado);
+        return dto;
+      }),
+    );
+
+    return {
+      totalReportes: lista.length,
+      aportes: await this.likeRepository.contarPorUsuarioEnOtros(userID),
+      reportes: lista,
+    };
+  }
+  
   /**
    * Arma el DTO completo de lectura: categorías (por nombre), evidencias,
    * nombre del autor, total de likes y si `userID` ya dio like.
