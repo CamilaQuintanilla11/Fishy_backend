@@ -24,6 +24,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { ModerarReporteDto } from './dto/admin-reporte.dto';
+import { MisReportesResponseDto } from './dto/mis-reportes-response.dto';
 
 @ApiTags('reportes')
 @ApiBearerAuth()
