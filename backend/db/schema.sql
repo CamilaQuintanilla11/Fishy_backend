@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS lecturas (
     id CHAR(36) PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
     contenido TEXT NOT NULL,
+    modulo INT NOT NULL DEFAULT 1,
     orden INT NOT NULL UNIQUE
 );
 CREATE TABLE IF NOT EXISTS progreso_lecturas (
