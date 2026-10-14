@@ -6,11 +6,12 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { sign, verify } from './jwt';
 import { createHash } from 'node:crypto';
+import * as bcrypt from 'bcrypt';
 
 const ACCESS_TTL = 15 * 60;
 const REFRESH_TTL = 7 * 24 * 60 * 60;
 const ROL_DEFAULT = 'usuario';
-const bcrypt = require('bcrypt') as typeof import ('bcrypt');
+
 
 @Injectable()
 export class AuthService {

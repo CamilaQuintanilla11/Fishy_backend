@@ -45,6 +45,18 @@ export class EvidenciaRepository {
     return rows.map(toEntity);
   }
 
+  async buscaEnlaceAprobado(url: string, estadoAprobadoId: string): Promise<Evidencia | undefined> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT e.id, e.url, e.foto, e.fecha_creado, e.perteneceAReporte, e.descripcion
+       FROM evidencia e
+       INNER JOIN reporte r ON r.id = e.perteneceAReporte
+       WHERE e.url = ? AND r.tieneEstado = ?
+       ORDER BY e.fecha_creado DESC`,
+      [url, estadoAprobadoId],
+    );
+    return rows[0] && toEntity(rows[0]);
+  }
+
   async save(data: { url: string; foto: string; descripcion:string; perteneceAReporte: string }): Promise<Evidencia> {
     const id = randomUUID();
     await this.pool.query(

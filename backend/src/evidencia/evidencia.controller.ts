@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -63,6 +64,18 @@ export class EvidenciaController {
   listar(@CurrentUser() user: JwtPayload): Promise<EvidenciaResponseDto[]> {
     return this.service.listar(user.rolNombre);
   }
+
+  @Get('consultar-enlace')
+  @ApiOperation({ summary: 'Consultar si un enlace aparece en evidencias de reportes aprobados' })
+  @ApiResponse({ status: 200, type: EvidenciaResponseDto, description: 'Evidencia encontrada o null si no hay coincidencias' })
+  buscarEnlace(@Query('url') url: string): Promise<EvidenciaResponseDto | null> {
+    if (!url?.trim()) {
+      throw new BadRequestException('Debes proporcionar una URL');
+    }
+
+    return this.service.buscaEnlaceAprobado(url);
+  }
+
 
   @Get(':id')
   @ApiOperation({ summary: 'Ver una evidencia' })
