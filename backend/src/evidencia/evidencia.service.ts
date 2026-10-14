@@ -54,6 +54,26 @@ async crear(userID: string, dto: CreateEvidenciaDto): Promise<EvidenciaResponseD
     return evidencias.map(EvidenciaResponseDto.fromEntity);
   }
 
+
+  async buscaEnlaceAprobado(url: string): Promise<EvidenciaResponseDto | null> {
+    const urlNormalizada = url.trim();
+
+    if (!urlNormalizada) {
+      return null;
+    }
+    const aprobado = await this.estadoRepository.findByNombre('aprobado');
+    if (!aprobado) {
+      throw new Error('No existe el estado "aprobado"');
+    }
+
+    const evidencia = await this.repository.buscaEnlaceAprobado(urlNormalizada, aprobado.id);
+    if (!evidencia) {
+      return null;
+    }
+    return EvidenciaResponseDto.fromEntity(evidencia);
+  }
+
+
   async actualizar(userID: string, id: string, dto: UpdateEvidenciaDto): Promise<EvidenciaResponseDto> {
     await this.getEvidenciaPropia(userID, id);
     const actualizado = await this.repository.update(id, dto);
