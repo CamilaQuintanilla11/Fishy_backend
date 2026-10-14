@@ -11,12 +11,13 @@ INSERT IGNORE INTO categoria (id, nombre) VALUES
   (UUID(), 'Recientes'),
   (UUID(), 'SMS'),
   (UUID(), 'URL'),
-  (UUID(), 'Email');
+  (UUID(), 'Email'),
+  (UUID(), 'Otros');
 
 INSERT IGNORE INTO riesgo (id, nombre) VALUES
-  (UUID(), 'Riesgo'),
-  (UUID(), 'Informativo'),
-  (UUID(), 'Advertencia');
+  (UUID(), 'Alto'),
+  (UUID(), 'Bajo'),
+  (UUID(), 'Medio');
   
 
 INSERT INTO lecturas (id, titulo, contenido, orden) VALUES
