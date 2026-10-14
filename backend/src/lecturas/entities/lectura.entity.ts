@@ -3,7 +3,10 @@ export class Lectura {
   titulo: string;
   contenido: string;
   orden: number;
+  modulo: number;
 }
 
-export type LecturaConProgreso = Lectura & { completada: boolean };
-export type LecturaResumen = Omit<LecturaConProgreso, 'contenido'>;
+export type LecturaConProgreso = Lectura & {
+  completada: boolean;
+  fecha_completado: Date | null;
+};
