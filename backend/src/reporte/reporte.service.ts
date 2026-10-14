@@ -312,8 +312,8 @@ export class ReporteService {
     const evidencias = await this.evidenciaRepository.findByReporteId(reporte.id);
     dto.evidencias = evidencias.map((e) => EvidenciaResponseDto.fromEntity(e));
  
-    const autor = await this.usuarioRepository.findById(reporte.perteneceA);
-    dto.autor = autor?.nombre ?? 'Anónimo';
+    dto.autor = reporte.perteneceA ? ((await this.usuarioRepository.findById(reporte.perteneceA))?.nombre ?? 'Anónimo')
+    : 'Usuario eliminado';
  
     dto.mePasoIgualCount = await this.likeRepository.contar(reporte.id);
     dto.yaDiLike = userID ? await this.likeRepository.existe(userID, reporte.id) : false;

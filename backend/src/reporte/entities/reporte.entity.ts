@@ -8,7 +8,7 @@ export class Reporte {
   fecha_update: Date;
   fecha_aprob?: Date;
 
-  perteneceA: string;
+  perteneceA: string | null;
   tieneEstado: string;
   tieneRiesgo: string | null;
   evidencias: Evidencia[];

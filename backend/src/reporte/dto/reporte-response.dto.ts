@@ -25,7 +25,7 @@ export class ReporteResponseDto {
   fecha_aprob: string | null;
 
   @ApiPropertyOptional({ format: 'uuid', example: '3f1c2e7a-9b4d-4e6f-8a1b-2c3d4e5f6a7b', description: 'Id del dueño; solo viene en respuestas para admin' })
-  perteneceA: string;
+  perteneceA: string | null;
 
   @ApiProperty({ format: 'uuid', example: '3f1c2e7a-9b4d-4e6f-8a1b-2c3d4e5f6a7b', description: 'Id del estado (GET /estados)' })
   tieneEstado: string;

@@ -39,11 +39,11 @@ CREATE TABLE IF NOT EXISTS reporte (
     fecha_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     fecha_aprob TIMESTAMP NULL,
 
-    perteneceA CHAR(36) NOT NULL,
+    perteneceA CHAR(36) NULL,
     tieneEstado CHAR(36) NOT NULL,
     tieneRiesgo CHAR(36) NULL,
 
-    FOREIGN KEY (perteneceA) REFERENCES usuario(id),
+    FOREIGN KEY (perteneceA) REFERENCES usuario(id) ON DELETE SET NULL,
     FOREIGN KEY (tieneEstado) REFERENCES estado(id),
     FOREIGN KEY (tieneRiesgo) REFERENCES riesgo(id)
 );
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS reporte_like (
     fecha_like TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (usuario_id, reporte_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE,
     FOREIGN KEY (reporte_id) REFERENCES reporte(id) ON DELETE CASCADE
 );
 
