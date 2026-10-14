@@ -37,7 +37,7 @@ describe('HU04- Consultar enlace', () => {
     );
   });
 
-  it('debe devolver la evidencia cuando encuentra la URL', async () => {
+  it('test_cp01_busqueda_exitosa', async () => {
     estadoRepository.findByNombre.mockResolvedValue({
       id: 'estado-aprobado',
       nombre: 'aprobado',
@@ -57,7 +57,7 @@ describe('HU04- Consultar enlace', () => {
     expect(resultado).toEqual(EvidenciaResponseDto.fromEntity(evidencia));
   });
 
-  it('debe devolver null cuando no encuentra la URL', async () => {
+  it('test_cp02_busqueda_sin_resultados', async () => {
     estadoRepository.findByNombre.mockResolvedValue({
       id: 'estado-aprobado',
       nombre: 'aprobado',
@@ -72,7 +72,7 @@ describe('HU04- Consultar enlace', () => {
     expect(resultado).toBeNull();
   });
 
-  it('debe devolver null si la URL está vacía sin consultar el repositorio', async () => {
+  it('test_cp03_url_vacia', async () => {
     const resultado = await service.buscaEnlaceAprobado('   ');
 
     expect(resultado).toBeNull();
@@ -80,7 +80,7 @@ describe('HU04- Consultar enlace', () => {
     expect(evidenciaRepository.buscaEnlaceAprobado).not.toHaveBeenCalled();
   });
 
-  it('debe lanzar un error si no existe el estado aprobado', async () => {
+  it('test_cp04_estado_no_existe', async () => {
     estadoRepository.findByNombre.mockResolvedValue(undefined);
 
     await expect(
