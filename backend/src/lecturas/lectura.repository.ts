@@ -86,8 +86,6 @@ export class LecturaRepository {
     return result.affectedRows > 0;
   }
 
-  // ---------- Progreso ----------
-
   async marcarCompletada(usuarioId: string, lecturaId: string): Promise<void> {
     await this.pool.query(
       `INSERT INTO progreso_lecturas (usuario_id, lectura_id, completada, fecha_completado)
