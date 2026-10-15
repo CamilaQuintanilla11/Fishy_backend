@@ -1,22 +1,33 @@
 import { Module, OnModuleDestroy, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createPool } from 'mysql2/promise';
 import type { Pool } from 'mysql2/promise';
 
 export const DB_POOL = 'DB_POOL';
 
-const DATABASE_URL = 'mysql://root@localhost:3306/fishy';
-
 @Module({
-  providers:[
+  providers: [
     {
-      provide:DB_POOL,
-      useFactory:()=>{
-        console.log(' Conectando  a '+DATABASE_URL);
-        return createPool({uri:DATABASE_URL });
+      provide: DB_POOL,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('DB_HOST', 'localhost');
+        const port = Number(config.get<string>('DB_PORT', '3306'));
+        const database = config.getOrThrow<string>('DB_NAME');
+
+        console.log(`Conectando a mysql://${host}:${port}/${database}`);
+
+        return createPool({
+          host,
+          port,
+          user: config.getOrThrow<string>('DB_USER'),
+          password: config.get<string>('DB_PASSWORD', ''),
+          database,
+        });
       },
     },
   ],
-  exports:[DB_POOL],
+  exports: [DB_POOL],
 })
 export class DatabaseModule implements OnModuleDestroy {
   constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
