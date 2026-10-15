@@ -7,6 +7,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { sign, verify } from './jwt';
 import { createHash } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
+import { PerfilResponseDto } from './dto/perfil-response.dto';
 
 const ACCESS_TTL = 15 * 60;
 const REFRESH_TTL = 7 * 24 * 60 * 60;
@@ -20,10 +21,15 @@ export class AuthService {
     private readonly rolRepository: RolRepository,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ id: string; correo: string }> {
+  async register(dto: RegisterDto): Promise<{ id: string; correo: string; nombreUsuario: string }> {
     if (await this.usuarioRepository.findByCorreo(dto.correo)) {
       throw new ConflictException('Ese correo ya esta registrado');
     }
+
+    if (await this.usuarioRepository.findByNombreUsuario(dto.nombreUsuario)) {
+      throw new ConflictException('Ese nombre de usuario ya esta registrado');
+    }
+    
     const rolDefault = await this.rolRepository.findByNombre(ROL_DEFAULT);
     if (!rolDefault) {
       throw new Error(`El rol "${ROL_DEFAULT}" no existe -- revisa db/seed.sql`);
@@ -31,10 +37,11 @@ export class AuthService {
     const usuario = await this.usuarioRepository.save({
       nombre: dto.nombre,
       correo: dto.correo,
+      nombreUsuario: dto.nombreUsuario,
       contrasenaHash: await bcrypt.hash(dto.contrasena, 10),
       tieneRol: rolDefault.id,
     });
-    return { id: usuario.id, correo: usuario.correo };
+    return { id: usuario.id, correo: usuario.correo, nombreUsuario: usuario.nombreUsuario };
   }
 
   async login(dto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
@@ -81,6 +88,24 @@ export class AuthService {
       ACCESS_TTL,
     );
     return { accessToken };
+  }
+
+  async perfil(usuarioId: string): Promise<PerfilResponseDto> {
+    const usuario = await this.usuarioRepository.findById(usuarioId);
+    if (!usuario) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+    const rol = await this.rolRepository.findById(usuario.tieneRol);
+    if (!rol) {
+      throw new Error(`El usuario tiene un tieneRol que no existe en la tabla rol`);
+    }
+    return {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      nombreUsuario: usuario.nombreUsuario,
+      correo: usuario.correo,
+      rol: rol.nombre,
+    };
   }
 }
 

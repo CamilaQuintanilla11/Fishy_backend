@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength,} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength,} from 'class-validator';
 
 export class CreateUsuarioDto {
   @ApiProperty({ example: 'Ana López' })
@@ -16,4 +16,12 @@ export class CreateUsuarioDto {
   @MinLength(10)
   @MaxLength(72)
   contrasena: string;
+
+  @ApiProperty({ example: 'ana_lopez' })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(30)
+  @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9_.]+$/, {message: 'El nombre de usuario solo puede tener letras, numeros, guion bajo y punto'})
+  nombreUsuario: string;
 }

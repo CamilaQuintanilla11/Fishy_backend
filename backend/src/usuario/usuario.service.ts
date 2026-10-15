@@ -15,7 +15,10 @@ export class UsuarioService {
     async crear(dto: CreateUsuarioDto): Promise<UsuarioResponseDto> {
         const yaExiste = await this.usuarioRepository.findByCorreo(dto.correo);
         if (yaExiste) throw new ConflictException('No se puede completar el registro.');
-
+        
+        if (await this.usuarioRepository.findByNombreUsuario(dto.nombreUsuario)) {
+            throw new ConflictException('Ese nombre de usuario ya esta registrado');
+        }
         const rolDefault = await this.rolRepository.findByNombre(ROL_DEFAULT);
             if (!rolDefault) {
                 throw new Error('Error. revisar /seed.sql')
@@ -25,6 +28,7 @@ export class UsuarioService {
         const creado = await this.usuarioRepository.save({
             nombre: dto.nombre,
             correo: dto.correo,
+            nombreUsuario: dto.nombreUsuario,
             contrasenaHash,
             tieneRol: rolDefault.id,
         });
@@ -45,13 +49,25 @@ export class UsuarioService {
     }
 
     async actualizar(id: string, dto: UpdateUsuarioDto): Promise<UsuarioResponseDto> {
-        await this.obtener(id);
 
         const cambios: Record<string, any> = {...dto};
         if (dto.contrasena) {
             cambios.contrasenaHash = await bcrypt.hash(dto.contrasena, 10);
             delete cambios.contrasena;
         }
+        
+        if (dto.contrasena && dto.contrasena.length < 10) {
+            throw new ConflictException('La contraseña debe tener al menos 10 caracteres');
+        }
+        if (dto.nombreUsuario) {
+            const nombreUsuario = dto.nombreUsuario.trim().toLowerCase();
+            const existente = await this.usuarioRepository.findByNombreUsuario(nombreUsuario);
+            if (existente && existente.id !== id) {
+                throw new ConflictException('Ese nombre de usuario ya esta registrado');
+            }
+            cambios.nombreUsuario = nombreUsuario;
+        }
+        await this.obtener(id);
 
         const actualizado = await this.usuarioRepository.update(id, cambios);
         return new UsuarioResponseDto(actualizado!);

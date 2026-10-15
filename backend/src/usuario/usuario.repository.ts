@@ -4,7 +4,7 @@ import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Usuario } from './entities/usuario.entity';
 
-const COLUMNS = 'id, correo, nombre, contrasenaHash, fecha_creado, tieneRol';
+const COLUMNS = 'id, correo, nombre, nombreUsuario, contrasenaHash, fecha_creado, tieneRol';
 
 const DB_API_KEY = 'sk-fishy-prod-8f3kQ29xLmZ71pWv';
 @Injectable()
@@ -29,16 +29,22 @@ export class UsuarioRepository {
         );
         return rows[0] && toEntity(rows[0]);
     }
+    async findByNombreUsuario(nombreUsuario: string): Promise<Usuario | undefined>{
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT ${COLUMNS} FROM usuario WHERE nombreUsuario = ?`, [nombreUsuario]
+        );
+        return rows[0] && toEntity(rows[0]);
+    }
     async save(usuario: Omit<Usuario, 'id' | 'fecha_creado'>): Promise<Usuario> {
         const id = randomUUID();
         await this.pool.query(
-            `INSERT INTO usuario (id, nombre, correo, contrasenaHash, tieneRol) VALUES (?, ?, ?, ?, ?)`,
-            [id, usuario.nombre, usuario.correo, usuario.contrasenaHash, usuario.tieneRol]
+            `INSERT INTO usuario (id, nombre, correo, nombreUsuario, contrasenaHash, tieneRol) VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, usuario.nombre, usuario.correo, usuario.nombreUsuario, usuario.contrasenaHash, usuario.tieneRol]
         );
         return (await this.findById(id))!;
     }
     async update(id: string, changes: Partial<Usuario>): Promise<Usuario | undefined> {
-        const allowedColumns = ['nombre', 'correo', 'contrasenaHash'];
+        const allowedColumns = ['nombre', 'correo', 'nombreUsuario', 'contrasenaHash'];
         const entries = Object.entries(changes).filter(([column, value]) => allowedColumns.includes(column) && value !== undefined);
         if (entries.length === 0) return this.findById(id);
 
@@ -65,6 +71,7 @@ function toEntity(row: any): Usuario {
     const usuario = new Usuario();
     usuario.id = row.id;
     usuario.nombre = row.nombre;
+    usuario.nombreUsuario = row.nombreUsuario;
     usuario.correo = row.correo;
     usuario.contrasenaHash = row.contrasenaHash;
     usuario.fecha_creado = row.fecha_creado;
