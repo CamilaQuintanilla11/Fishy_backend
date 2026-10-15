@@ -8,15 +8,20 @@ export class UsuarioResponseDto {
     @ApiProperty({ example: 'Ana López' })
     nombre: string;
 
+    @ApiProperty({ example: 'ana_lopez' })
+    nombreUsuario: string;
+
     @ApiProperty({ example: 'ana@example.com' })
     correo: string;
 
     @ApiProperty({ example: '2026-10-09T15:00:00.000Z', description: 'ISO 8601' })
     fecha_creado: Date;
 
+
     constructor(usuario: Usuario) {
         this.id = usuario.id;
         this.nombre = usuario.nombre;
+        this.nombreUsuario = usuario.nombreUsuario;
         this.correo = usuario.correo;
         this.fecha_creado = usuario.fecha_creado;
     }

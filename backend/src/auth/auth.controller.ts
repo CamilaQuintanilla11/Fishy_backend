@@ -7,6 +7,7 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './jwt';
 import { CurrentUser } from './current-user.decorator';
 import { AuthGuard } from './auth.guard';
+import { PerfilResponseDto } from './dto/perfil-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,10 +44,10 @@ export class AuthController {
     @Get('me')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Quién soy: datos del access token' })
-    @ApiResponse({ status: 200, schema: { example: { id: '3f1c2e7a-9b4d-4e6f-8a1b-2c3d4e5f6a7b', correo: 'ana@example.com', rol: 'usuario' } } })
+    @ApiOperation({ summary: 'Quién soy: datos del usuario logueado' })
+    @ApiResponse({ status: 200, schema: { example: { id: '3f1c2e7a-9b4d-4e6f-8a1b-2c3d4e5f6a7b', nombreUsuario: 'ana', correo: 'ana@example.com', rol: 'usuario' } } })
     @ApiResponse({ status: 401, description: 'Falta el token, es inválido o expiró' })
     me(@CurrentUser() user: JwtPayload) {
-    return {id: user.sub, correo: user.correo, rol: user.rolNombre,};
+        return this.service.perfil(user.sub);
     }
 }
