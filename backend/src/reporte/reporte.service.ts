@@ -250,7 +250,10 @@ export class ReporteService {
    * @throws NotFoundException si no hay reporte con ese id.
    */
   async darLike(userID: string, id: string): Promise<{ mePasoIgualCount: number; yaDiLike: boolean }> {
-    await this.obtenerReporte(id); 
+    const reporte = await this.obtenerReporte(id);
+    if (reporte.perteneceA === userID) {
+      throw new ForbiddenException('No puedes marcar "me pasó igual" en tu propio reporte');
+    }
     await this.likeRepository.agregar(userID, id);
     return {
       mePasoIgualCount: await this.likeRepository.contar(id),
@@ -317,6 +320,7 @@ export class ReporteService {
  
     dto.mePasoIgualCount = await this.likeRepository.contar(reporte.id);
     dto.yaDiLike = userID ? await this.likeRepository.existe(userID, reporte.id) : false;
+    dto.esMio = userID ? reporte.perteneceA === userID : false;
     
     if (reporte.tieneRiesgo) {
       const riesgo = await this.riesgoRepository.findById(reporte.tieneRiesgo);

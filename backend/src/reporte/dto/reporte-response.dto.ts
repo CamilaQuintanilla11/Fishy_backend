@@ -45,6 +45,9 @@ export class ReporteResponseDto {
   @ApiProperty({ example: 3, description: 'Cuántos usuarios marcaron "me pasó igual"' })
   mePasoIgualCount: number = 0;
 
+  @ApiProperty({ example: false, description: 'Si el reporte es de quien pregunta' })
+  esMio: boolean = false;
+
   @ApiProperty({ example: false, description: 'Si quien pregunta ya marcó "me pasó igual"' })
   yaDiLike: boolean = false;
  
