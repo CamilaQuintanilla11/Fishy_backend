@@ -58,6 +58,13 @@ export class UsuarioController {
         return this.usuarioService.crear(dto);
     }
 
+    @Patch('me')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    actualizarMiPerfil(@CurrentUser() user: JwtPayload, @Body() dto: UpdateUsuarioDto) {
+        return this.usuarioService.actualizar(user.sub, dto);
+    }
+
     @Patch(':id')
     @ApiOperation({ summary: 'Editar nombre, correo o contraseña (el tuyo; admin: cualquiera)' })
     @ApiResponse({ status: 200, type: UsuarioResponseDto })
